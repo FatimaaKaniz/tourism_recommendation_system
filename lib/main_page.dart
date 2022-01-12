@@ -1,10 +1,9 @@
 import 'package:animated_text_kit/animated_text_kit.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:social_login_buttons/social_login_buttons.dart';
 import 'package:tourism_recommendation_system/landing_page.dart';
-import 'package:tourism_recommendation_system/sign_in/email_sign_in_page.dart';
-import 'package:tourism_recommendation_system/sign_in/sign_in_page.dart';
 
 class MainPage extends StatelessWidget {
   const MainPage({Key? key}) : super(key: key);
@@ -15,7 +14,7 @@ class MainPage extends StatelessWidget {
       body: Container(
         decoration: BoxDecoration(
           image: DecorationImage(
-            image: AssetImage("resources/images/bg.jpg"),
+            image: AssetImage("resources/images/bg1.jpg"),
             fit: BoxFit.cover,
           ),
         ),
@@ -27,20 +26,17 @@ class MainPage extends StatelessWidget {
                 children: [
                   Padding(
                     padding: const EdgeInsets.fromLTRB(0, 180, 0, 20),
-                    child: Align(
-                      alignment: Alignment.center,
-                      child: Text(
-                        "Tourism Recommendation System",
-                        style: GoogleFonts.permanentMarker(
-                          textStyle: TextStyle(
-                            color: Colors.white60,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 5,
-                            fontSize: 33,
-                          ),
+                    child: Text(
+                      "Tourism Recommendation System",
+                      style: GoogleFonts.permanentMarker(
+                        textStyle: TextStyle(
+                          color: Colors.deepPurple,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 5,
+                          fontSize: 33,
                         ),
-                        textAlign: TextAlign.center,
                       ),
+                      textAlign: TextAlign.center,
                     ),
                   ),
                   Align(
@@ -50,6 +46,7 @@ class MainPage extends StatelessWidget {
                         RotateAnimatedText(
                           'Fuel Your Soul With Travel!',
                           textStyle: const TextStyle(
+                            fontStyle: FontStyle.italic,
                             fontSize: 25.0,
                             fontWeight: FontWeight.bold,
                             color: Colors.white70,
@@ -58,6 +55,7 @@ class MainPage extends StatelessWidget {
                         RotateAnimatedText(
                           'We’ve got it all for you!',
                           textStyle: const TextStyle(
+                            fontStyle: FontStyle.italic,
                             fontSize: 25.0,
                             fontWeight: FontWeight.bold,
                             color: Colors.white70,
@@ -66,6 +64,7 @@ class MainPage extends StatelessWidget {
                         RotateAnimatedText(
                           'Happiness Is Traveling!',
                           textStyle: const TextStyle(
+                            fontStyle: FontStyle.italic,
                             fontSize: 25.0,
                             fontWeight: FontWeight.bold,
                             color: Colors.white70,
@@ -94,7 +93,6 @@ class MainPage extends StatelessWidget {
                     fontSize: 20,
                     borderRadius: 50,
                     backgroundColor: Colors.grey.withOpacity(0.5),
-
                   ),
                 )
               ],

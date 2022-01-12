@@ -1,26 +1,24 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:social_login_buttons/social_login_buttons.dart';
 import 'package:tourism_recommendation_system/custom_widgets/dialogs/alert_dialogs.dart';
 import 'package:tourism_recommendation_system/services/auth_base.dart';
-
-import 'email_sign_in_model.dart';
+import '../models/email_sign_in_model.dart';
 
 class EmailSignInFormChangeNotifier extends StatefulWidget {
   EmailSignInFormChangeNotifier({required this.model});
 
-  final EmailSignInChangeModel model;
+  final EmailSignInModel model;
 
   static Widget create(BuildContext context) {
     final auth = Provider.of<AuthBase>(context, listen: false);
-    return ChangeNotifierProvider<EmailSignInChangeModel>(
-      create: (_) => EmailSignInChangeModel(auth: auth),
-      child: Consumer<EmailSignInChangeModel>(
+    return ChangeNotifierProvider<EmailSignInModel>(
+      create: (_) => EmailSignInModel(auth: auth),
+      child: Consumer<EmailSignInModel>(
         builder: (_, model, __) => EmailSignInFormChangeNotifier(
-            model: model), //every time called when notify listner called
+            model: model), //every time called when notify listener called
       ),
     );
   }
@@ -36,7 +34,7 @@ class _EmailSignInFormChangeNotifierState
   final TextEditingController _passwordController = TextEditingController();
   final FocusScopeNode _node = FocusScopeNode();
 
-  EmailSignInChangeModel get model => widget.model;
+  EmailSignInModel get model => widget.model;
 
   @override
   void dispose() {
@@ -71,18 +69,33 @@ class _EmailSignInFormChangeNotifierState
     _passwordController.clear();
   }
 
+  //
   Widget _buildHeader() {
     if (model.isLoading) {
-      return Center(
-        child: CircularProgressIndicator(),
+      return SizedBox(
+        height: 80,
+        child: Center(
+            child: LoadingAnimationWidget.staggeredDotWave(
+          color: Colors.teal,
+          size: 65,
+        )),
       );
     }
-    return Container();
+    return SizedBox(
+      height: 80,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(0, 20, 0, 20),
+        child: Text(
+          'Hello User!\nPlease fill this form to get started',
+          style: TextStyle(fontSize: 15, color: Colors.grey),
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
   }
 
   List<Widget> _buildChildren() {
     return [
-      _buildHeader(),
       _buildEmailTextField(),
       if (model.formType != EmailSignInFormType.forgotPassword) ...<Widget>[
         SizedBox(height: 8.0),
@@ -101,16 +114,14 @@ class _EmailSignInFormChangeNotifierState
       ),
       SizedBox(height: 8.0),
       TextButton(
-        child: Text(model.secondaryButtonText!,
-            style: TextStyle(fontSize: 15)),
+        child: Text(model.secondaryButtonText!, style: TextStyle(fontSize: 15)),
         onPressed: model.isLoading
             ? null
             : () => _updateFormType(model.secondaryActionFormType!),
       ),
       if (model.formType == EmailSignInFormType.signIn)
         TextButton(
-          child: Text('Forgot password?',
-              style: TextStyle(fontSize: 15)),
+          child: Text('Forgot password?', style: TextStyle(fontSize: 15)),
           onPressed: model.isLoading
               ? null
               : () => _updateFormType(EmailSignInFormType.forgotPassword),
@@ -212,13 +223,6 @@ class _EmailSignInFormChangeNotifierState
     );
   }
 
-
-  UnderlineInputBorder _getTextFieldBorder({Color? color}) {
-    return UnderlineInputBorder(
-      borderSide: BorderSide(color: color ?? Colors.grey.shade200),
-    );
-  }
-
   void _emailEditingComplete() {
     if (model.canSubmitEmail) {
       _node.nextFocus();
@@ -237,16 +241,104 @@ class _EmailSignInFormChangeNotifierState
   Widget build(BuildContext context) {
     return Center(
       child: SingleChildScrollView(
-        child: Card(
-          color: Colors.grey.shade200,
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: _buildChildren(),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(0, 40, 0, 30),
+              child: Text(
+                'Choose Account Type',
+                style: TextStyle(
+                  fontSize: 18,
+                  color: Colors.teal,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
-          ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                InkWell(
+                  onTap: () => model.updateWith(isAdmin: true),
+                  child: SizedBox(
+                    height: 150,
+                    width: 150,
+                    child: Card(
+                      borderOnForeground: true,
+                      elevation: 2.0,
+                      shape: RoundedRectangleBorder(
+                        side: BorderSide(
+                            color: model.isAdmin
+                                ? Colors.teal
+                                : Colors.grey.shade200,
+                            width: 2),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Image(
+                            image: AssetImage('resources/images/admin.png'),
+                          ),
+                          Text(
+                            'Admin User',
+                            style: TextStyle(fontSize: 15),
+                          ),
+                        ],
+                      ),
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                InkWell(
+                  onTap: () => model.updateWith(isAdmin: false),
+                  child: SizedBox(
+                    height: 150,
+                    width: 150,
+                    child: Card(
+                      borderOnForeground: true,
+                      elevation: 2.0,
+                      shape: RoundedRectangleBorder(
+                        side: BorderSide(
+                            color: !model.isAdmin
+                                ? Colors.teal
+                                : Colors.grey.shade200,
+                            width: 2),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Image(
+                            image: AssetImage('resources/images/user.png'),
+                          ),
+                          Text(
+                            'Standard User',
+                            style: TextStyle(fontSize: 15),
+                          ),
+                        ],
+                      ),
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            _buildHeader(),
+            Card(
+              elevation: 2.0,
+              shape: RoundedRectangleBorder(
+                side: BorderSide(color: Colors.grey.shade200, width: 1),
+              ),
+              color: Colors.white,
+              borderOnForeground: true,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: _buildChildren(),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

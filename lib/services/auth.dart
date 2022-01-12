@@ -3,7 +3,6 @@ import 'package:flutter_login_facebook/flutter_login_facebook.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:tourism_recommendation_system/services/auth_base.dart';
 
-
 class Auth implements AuthBase {
   final _firebaseAuth = FirebaseAuth.instance;
 
@@ -18,39 +17,42 @@ class Auth implements AuthBase {
     final userCredentials = await _firebaseAuth.signInAnonymously();
     return userCredentials.user;
   }
-  @override
-  Future<User?> signInWithEmailAndPassword(String email, String password) async{
-    final userCredentials = await _firebaseAuth.signInWithCredential(
-      EmailAuthProvider.credential(email: email, password: password)
-    );
-    return userCredentials.user;
 
-  }
   @override
-  Future<User?> createUserWithEmailAndPassword(String email, String password) async {
+  Future<User?> signInWithEmailAndPassword(
+      String email, String password) async {
+    final userCredentials = await _firebaseAuth.signInWithCredential(
+        EmailAuthProvider.credential(email: email, password: password));
+    return userCredentials.user;
+  }
+
+  @override
+  Future<User?> createUserWithEmailAndPassword(
+      String email, String password) async {
     final userCredentials = await _firebaseAuth.createUserWithEmailAndPassword(
         email: email, password: password);
     return userCredentials.user;
-
   }
 
   @override
   Future<User?> signInWithGoogle() async {
-    final googleSignIn = GoogleSignIn();
-    final googleUser = await googleSignIn.signIn();
-    final googleAuth = await googleUser!.authentication;
-    if (googleAuth.idToken != null) {
-      final userCredentials = await _firebaseAuth
-          .signInWithCredential(GoogleAuthProvider.credential(
-        idToken: googleAuth.idToken,
-        accessToken: googleAuth.accessToken,
-      ));
-      return userCredentials.user;
-    } else {
-      throw FirebaseAuthException(
-          code: 'ERROR_MISSING_GOOGLE_ID_TOKEN',
-          message: 'Missing Google ID Token');
-    }
+    try {
+      final googleSignIn = GoogleSignIn();
+      final googleUser = await googleSignIn.signIn();
+      final googleAuth = await googleUser!.authentication;
+      if (googleAuth.idToken != null) {
+        final userCredentials = await _firebaseAuth
+            .signInWithCredential(GoogleAuthProvider.credential(
+          idToken: googleAuth.idToken,
+          accessToken: googleAuth.accessToken,
+        ));
+        return userCredentials.user;
+      } else {
+        throw FirebaseAuthException(
+            code: 'ERROR_MISSING_GOOGLE_ID_TOKEN',
+            message: 'Missing Google ID Token');
+      }
+    } catch (e) {}
   }
 
   @override
@@ -72,7 +74,7 @@ class Auth implements AuthBase {
           var error = e.toString().split("[")[1].split("]");
           var errorCode = error[0].split("/");
           throw FirebaseAuthException(
-            code: errorCode[errorCode.length-1],
+            code: errorCode[errorCode.length - 1],
             message: error[1],
           );
         }
@@ -99,6 +101,7 @@ class Auth implements AuthBase {
     await facebookLogin.logOut();
     await _firebaseAuth.signOut();
   }
+
   Future<void> sendPasswordResetEmail(String email) async {
     await _firebaseAuth.sendPasswordResetEmail(email: email);
   }

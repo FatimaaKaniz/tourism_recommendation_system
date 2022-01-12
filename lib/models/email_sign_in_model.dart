@@ -4,14 +4,15 @@ import 'package:tourism_recommendation_system/sign_in/validators.dart';
 
 enum EmailSignInFormType { signIn, register, forgotPassword }
 
-class EmailSignInChangeModel with EmailAndPasswordValidators, ChangeNotifier {
-  EmailSignInChangeModel({
+class EmailSignInModel with EmailAndPasswordValidators, ChangeNotifier {
+  EmailSignInModel({
     required this.auth,
     this.email = '',
     this.password = '',
     this.formType = EmailSignInFormType.signIn,
     this.isLoading = false,
     this.submitted = false,
+    this.isAdmin = false,
   });
 
   final AuthBase auth;
@@ -20,6 +21,7 @@ class EmailSignInChangeModel with EmailAndPasswordValidators, ChangeNotifier {
   EmailSignInFormType formType;
   bool isLoading;
   bool submitted;
+  bool isAdmin;
 
   Future<bool> submit() async {
     try {
@@ -67,12 +69,14 @@ class EmailSignInChangeModel with EmailAndPasswordValidators, ChangeNotifier {
     EmailSignInFormType? formType,
     bool? isLoading,
     bool? submitted,
+    bool? isAdmin,
   }) {
     this.email = email ?? this.email;
     this.password = password ?? this.password;
     this.formType = formType ?? this.formType;
     this.isLoading = isLoading ?? this.isLoading;
     this.submitted = submitted ?? this.submitted;
+    this.isAdmin = isAdmin ?? this.isAdmin;
     notifyListeners();
   }
 

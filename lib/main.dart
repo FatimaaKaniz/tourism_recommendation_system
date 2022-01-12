@@ -2,8 +2,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:splash_screen_view/SplashScreenView.dart';
-import 'package:tourism_recommendation_system/homepage.dart';
-import 'package:tourism_recommendation_system/landing_page.dart';
 import 'package:tourism_recommendation_system/main_page.dart';
 import 'package:tourism_recommendation_system/services/auth.dart';
 import 'package:tourism_recommendation_system/services/auth_base.dart';
