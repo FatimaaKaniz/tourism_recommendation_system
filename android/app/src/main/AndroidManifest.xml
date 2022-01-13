@@ -2,6 +2,7 @@
     package="hu.unideb.inf.tourismRecommendation">
 
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:label="tourism_recommendation_system"

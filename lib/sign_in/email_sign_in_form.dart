@@ -1,40 +1,48 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:social_login_buttons/social_login_buttons.dart';
 import 'package:tourism_recommendation_system/custom_widgets/dialogs/alert_dialogs.dart';
+import 'package:tourism_recommendation_system/models/user_model.dart';
 import 'package:tourism_recommendation_system/services/auth_base.dart';
+import 'package:tourism_recommendation_system/services/database.dart';
 import '../models/email_sign_in_model.dart';
 
-class EmailSignInFormChangeNotifier extends StatefulWidget {
-  EmailSignInFormChangeNotifier({required this.model});
+class EmailSignInForm extends StatefulWidget {
+  EmailSignInForm({required this.model, required this.db});
 
   final EmailSignInModel model;
+  final Database db;
 
   static Widget create(BuildContext context) {
     final auth = Provider.of<AuthBase>(context, listen: false);
+    final db = Provider.of<Database>(context, listen: false);
     return ChangeNotifierProvider<EmailSignInModel>(
       create: (_) => EmailSignInModel(auth: auth),
       child: Consumer<EmailSignInModel>(
-        builder: (_, model, __) => EmailSignInFormChangeNotifier(
-            model: model), //every time called when notify listener called
-      ),
+          builder: (_, model, __) => EmailSignInForm(
+              model: model,
+              db: db) //every time called when notify listener called
+          ),
     );
   }
 
   @override
-  _EmailSignInFormChangeNotifierState createState() =>
-      _EmailSignInFormChangeNotifierState();
+  _EmailSignInFormState createState() =>
+      _EmailSignInFormState();
 }
 
-class _EmailSignInFormChangeNotifierState
-    extends State<EmailSignInFormChangeNotifier> {
+class _EmailSignInFormState
+    extends State<EmailSignInForm> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final FocusScopeNode _node = FocusScopeNode();
 
   EmailSignInModel get model => widget.model;
+
+  Database get db => widget.db;
 
   @override
   void dispose() {
@@ -46,7 +54,24 @@ class _EmailSignInFormChangeNotifierState
 
   Future<void> _submit() async {
     try {
-      final bool success = await model.submit();
+      bool success = false;
+      if (model.formType == EmailSignInFormType.signIn) {
+        if (await checkIfUserExists(model.email)) {
+          if (await canLogin(model.email, model.isAdmin)) {
+            success = await model.submit(context);
+          } else {
+            await showExceptionAlertDialog(
+              context: context,
+              title: 'Operation Not Allowed',
+              exception: new FirebaseAuthException(
+                  code: 'ERROR_OPERATION_NOT_ALLOWED',
+                  message: 'Restricted User Type!'),
+            );
+          }
+        }
+      } else {
+        success = await model.submit(context);
+      }
       if (success) {
         if (model.formType == EmailSignInFormType.forgotPassword) {
           await showAlertDialog(
@@ -58,8 +83,10 @@ class _EmailSignInFormChangeNotifierState
           _updateFormType(EmailSignInFormType.signIn);
         }
       }
-    } on PlatformException catch (e) {
+    } on Exception catch (e) {
       _showSignInError(context, e);
+      _emailController.clear();
+      _passwordController.clear();
     }
   }
 
@@ -112,13 +139,16 @@ class _EmailSignInFormChangeNotifierState
         borderRadius: 25,
         onPressed: model.canSubmit ? _submit : null,
       ),
-      SizedBox(height: 8.0),
-      TextButton(
-        child: Text(model.secondaryButtonText!, style: TextStyle(fontSize: 15)),
-        onPressed: model.isLoading
-            ? null
-            : () => _updateFormType(model.secondaryActionFormType!),
-      ),
+      if (!model.isAdmin) ...<Widget>[
+        SizedBox(height: 8.0),
+        TextButton(
+          child:
+              Text(model.secondaryButtonText!, style: TextStyle(fontSize: 15)),
+          onPressed: model.isLoading
+              ? null
+              : () => _updateFormType(model.secondaryActionFormType!),
+        )
+      ],
       if (model.formType == EmailSignInFormType.signIn)
         TextButton(
           child: Text('Forgot password?', style: TextStyle(fontSize: 15)),
@@ -139,49 +169,90 @@ class _EmailSignInFormChangeNotifierState
           SocialLoginButton(
             buttonType: SocialLoginButtonType.google,
             onPressed: () => _signInWithGoogle(context),
-            mode: SocialLoginButtonMode.single,
+            mode: model.isAdmin
+                ? SocialLoginButtonMode.multi
+                : SocialLoginButtonMode.single,
           ),
-          SocialLoginButton(
-            buttonType: SocialLoginButtonType.facebook,
-            onPressed: () => _signInWithFacebook(context),
-            mode: SocialLoginButtonMode.single,
-          ),
+          if (!model.isAdmin) ...<Widget>[
+            SocialLoginButton(
+              buttonType: SocialLoginButtonType.facebook,
+              onPressed: () => _signInWithFacebook(context),
+              mode: SocialLoginButtonMode.single,
+            ),
+          ]
         ],
       ),
     ];
   }
 
-  void _showSignInError(BuildContext context, Exception exception) {
+  void _showSignInError(BuildContext context, Exception exception,[ bool isSignIn = true]) {
     showExceptionAlertDialog(
-      title: 'Sign in failed',
+      title: isSignIn ? 'Sign in failed': 'Registration Failed',
       exception: exception,
       context: context,
     );
   }
 
+  Future<bool> checkIfUserExists(String email) async {
+    final users = await db.usersStream().first;
+    final allEmails = users.map((user) => user.email).toList();
+    if (!allEmails.contains(email)) {
+      return false;
+    }
+    return true;
+  }
+
+  Future<bool> canLogin(String email, bool isAdmin) async {
+    final users = await db.usersStream().first;
+    final allUsers = users.map((user) => user).toList();
+    bool _isAdmin =
+        allUsers.singleWhere((user) => user.email == email).isAdmin!;
+    if (_isAdmin == isAdmin) {
+      return true;
+    }
+    return false;
+  }
+
   Future<void> _signInWithGoogle(BuildContext context) async {
+    final auth = Provider.of<AuthBase>(context, listen: false);
     try {
-      final auth = Provider.of<AuthBase>(context, listen: false);
       model.updateWith(isLoading: true);
-      await auth.signInWithGoogle();
-      model.updateWith(isLoading: false);
+      final googleSignInInfo = await auth.initializeGoogleSignIn();
+      final googleAuth = googleSignInInfo.asMap()[0];
+      final email = googleSignInInfo.asMap()[1];
+      bool userExists = await checkIfUserExists(email);
+      if (!userExists && !model.isAdmin) {
+        await auth.signInWithGoogle(googleAuth, model.isAdmin);
+        db.setUser(MyUser(email: email, isAdmin: model.isAdmin),
+            auth.currentUser!.uid);
+      } else {
+        if (await canLogin(email, model.isAdmin)) {
+          await auth.signInWithGoogle(googleAuth, model.isAdmin);
+        } else {
+          throw FirebaseAuthException(
+              code: 'ERROR_OPERATION_NOT_ALLOWED',
+              message: 'Restricted User Type!');
+        }
+      }
     } on Exception catch (e) {
       _showSignInError(context, e);
     } finally {
-      model.updateWith(isLoading: false);
+      try {
+        model.updateWith(isLoading: false);
+      } catch (e) {}
     }
   }
 
   Future<void> _signInWithFacebook(BuildContext context) async {
     try {
-      model.updateWith(isLoading: true);
       final auth = Provider.of<AuthBase>(context, listen: false);
       await auth.signInWithFacebook();
-      model.updateWith(isLoading: false);
     } on Exception catch (e) {
       _showSignInError(context, e);
     } finally {
-      model.updateWith(isLoading: false);
+      try {
+        model.updateWith(isLoading: false);
+      } catch (e) {}
     }
   }
 
@@ -240,23 +311,25 @@ class _EmailSignInFormChangeNotifierState
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: SingleChildScrollView(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(0, 40, 0, 30),
-              child: Text(
-                'Choose Account Type',
-                style: TextStyle(
-                  fontSize: 18,
-                  color: Colors.teal,
-                  fontWeight: FontWeight.bold,
-                ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(0, 40, 0, 30),
+            child: Text(
+              model.formType == EmailSignInFormType.register
+                  ? 'Account Type'
+                  : 'Choose Account Type',
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.teal,
+                fontWeight: FontWeight.bold,
               ),
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              if (model.formType != EmailSignInFormType.register) ...<Widget>[
                 InkWell(
                   onTap: () => model.updateWith(isAdmin: true),
                   child: SizedBox(
@@ -287,59 +360,59 @@ class _EmailSignInFormChangeNotifierState
                       color: Colors.white,
                     ),
                   ),
-                ),
-                InkWell(
-                  onTap: () => model.updateWith(isAdmin: false),
-                  child: SizedBox(
-                    height: 150,
-                    width: 150,
-                    child: Card(
-                      borderOnForeground: true,
-                      elevation: 2.0,
-                      shape: RoundedRectangleBorder(
-                        side: BorderSide(
-                            color: !model.isAdmin
-                                ? Colors.teal
-                                : Colors.grey.shade200,
-                            width: 2),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          Image(
-                            image: AssetImage('resources/images/user.png'),
-                          ),
-                          Text(
-                            'Standard User',
-                            style: TextStyle(fontSize: 15),
-                          ),
-                        ],
-                      ),
-                      color: Colors.white,
+                )
+              ],
+              InkWell(
+                onTap: () => model.updateWith(isAdmin: false),
+                child: SizedBox(
+                  height: 150,
+                  width: 150,
+                  child: Card(
+                    borderOnForeground: true,
+                    elevation: 2.0,
+                    shape: RoundedRectangleBorder(
+                      side: BorderSide(
+                          color: !model.isAdmin
+                              ? Colors.teal
+                              : Colors.grey.shade200,
+                          width: 2),
                     ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Image(
+                          image: AssetImage('resources/images/user.png'),
+                        ),
+                        Text(
+                          'Standard User',
+                          style: TextStyle(fontSize: 15),
+                        ),
+                      ],
+                    ),
+                    color: Colors.white,
                   ),
                 ),
-              ],
-            ),
-            _buildHeader(),
-            Card(
-              elevation: 2.0,
-              shape: RoundedRectangleBorder(
-                side: BorderSide(color: Colors.grey.shade200, width: 1),
               ),
-              color: Colors.white,
-              borderOnForeground: true,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: _buildChildren(),
-                ),
+            ],
+          ),
+          _buildHeader(),
+          Card(
+            elevation: 2.0,
+            shape: RoundedRectangleBorder(
+              side: BorderSide(color: Colors.grey.shade200, width: 1),
+            ),
+            color: Colors.white,
+            borderOnForeground: true,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: _buildChildren(),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

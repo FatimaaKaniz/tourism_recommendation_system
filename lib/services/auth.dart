@@ -5,6 +5,10 @@ import 'package:tourism_recommendation_system/services/auth_base.dart';
 
 class Auth implements AuthBase {
   final _firebaseAuth = FirebaseAuth.instance;
+  bool _isCurrentUserAdmin = false;
+
+
+  bool get isCurrentUserAdmin => _isCurrentUserAdmin;
 
   @override
   Stream<User?> authStateChanges() => _firebaseAuth.authStateChanges();
@@ -13,46 +17,65 @@ class Auth implements AuthBase {
   User? get currentUser => _firebaseAuth.currentUser;
 
   @override
-  Future<User?> signInAnonymously() async {
+  Future<User?> signInAnonymously(bool isAdmin) async {
     final userCredentials = await _firebaseAuth.signInAnonymously();
+    _isCurrentUserAdmin = isAdmin;
     return userCredentials.user;
   }
 
   @override
   Future<User?> signInWithEmailAndPassword(
-      String email, String password) async {
+      String email, String password, bool isAdmin) async {
     final userCredentials = await _firebaseAuth.signInWithCredential(
         EmailAuthProvider.credential(email: email, password: password));
+    _isCurrentUserAdmin = isAdmin;
     return userCredentials.user;
   }
 
   @override
   Future<User?> createUserWithEmailAndPassword(
-      String email, String password) async {
-    final userCredentials = await _firebaseAuth.createUserWithEmailAndPassword(
-        email: email, password: password);
-    return userCredentials.user;
+      String email, String password, bool isAdmin) async {
+    try {
+      final userCredentials = await _firebaseAuth
+          .createUserWithEmailAndPassword(email: email, password: password);
+      _isCurrentUserAdmin = isAdmin;
+
+      return userCredentials.user;
+    } catch (e) {
+      rethrow;
+    }
   }
 
-  @override
-  Future<User?> signInWithGoogle() async {
+  Future<List> initializeGoogleSignIn() async {
     try {
       final googleSignIn = GoogleSignIn();
       final googleUser = await googleSignIn.signIn();
       final googleAuth = await googleUser!.authentication;
       if (googleAuth.idToken != null) {
-        final userCredentials = await _firebaseAuth
-            .signInWithCredential(GoogleAuthProvider.credential(
-          idToken: googleAuth.idToken,
-          accessToken: googleAuth.accessToken,
-        ));
-        return userCredentials.user;
+        return [googleAuth, googleUser.email];
       } else {
         throw FirebaseAuthException(
             code: 'ERROR_MISSING_GOOGLE_ID_TOKEN',
             message: 'Missing Google ID Token');
       }
-    } catch (e) {}
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<User?> signInWithGoogle(GoogleSignInAuthentication googleAuth, bool isAdmin) async {
+    try {
+      var userCredentials = await _firebaseAuth
+          .signInWithCredential(GoogleAuthProvider.credential(
+        idToken: googleAuth.idToken,
+        accessToken: googleAuth.accessToken,
+      ));
+      _isCurrentUserAdmin = isAdmin;
+      return userCredentials.user;
+    } catch (e) {
+      rethrow;
+    }
   }
 
   @override
@@ -62,6 +85,7 @@ class Auth implements AuthBase {
       FacebookPermission.publicProfile,
       FacebookPermission.email,
     ]);
+    _isCurrentUserAdmin = false;
     switch (response.status) {
       case FacebookLoginStatus.success:
         try {
@@ -69,6 +93,7 @@ class Auth implements AuthBase {
           final userCredential = await _firebaseAuth.signInWithCredential(
             FacebookAuthProvider.credential(accessToken!.token),
           );
+
           return userCredential.user;
         } catch (e) {
           var error = e.toString().split("[")[1].split("]");
@@ -105,4 +130,5 @@ class Auth implements AuthBase {
   Future<void> sendPasswordResetEmail(String email) async {
     await _firebaseAuth.sendPasswordResetEmail(email: email);
   }
+
 }

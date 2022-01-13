@@ -1,5 +1,4 @@
 import 'package:animated_text_kit/animated_text_kit.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:social_login_buttons/social_login_buttons.dart';
@@ -14,7 +13,7 @@ class MainPage extends StatelessWidget {
       body: Container(
         decoration: BoxDecoration(
           image: DecorationImage(
-            image: AssetImage("resources/images/bg1.jpg"),
+            image: AssetImage("resources/images/bg.jpg"),
             fit: BoxFit.cover,
           ),
         ),
@@ -30,7 +29,7 @@ class MainPage extends StatelessWidget {
                       "Tourism Recommendation System",
                       style: GoogleFonts.permanentMarker(
                         textStyle: TextStyle(
-                          color: Colors.deepPurple,
+                          color: Colors.white,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 5,
                           fontSize: 33,
@@ -49,7 +48,7 @@ class MainPage extends StatelessWidget {
                             fontStyle: FontStyle.italic,
                             fontSize: 25.0,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white70,
+                            color: Colors.white,
                           ),
                         ),
                         RotateAnimatedText(
@@ -58,7 +57,7 @@ class MainPage extends StatelessWidget {
                             fontStyle: FontStyle.italic,
                             fontSize: 25.0,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white70,
+                            color: Colors.white,
                           ),
                         ),
                         RotateAnimatedText(
@@ -67,7 +66,7 @@ class MainPage extends StatelessWidget {
                             fontStyle: FontStyle.italic,
                             fontSize: 25.0,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white70,
+                            color: Colors.white,
                           ),
                         ),
                       ],

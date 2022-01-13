@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:tourism_recommendation_system/custom_widgets/dialogs/alert_dialogs.dart';
 import 'package:tourism_recommendation_system/services/auth_base.dart';
 
-class HomePage extends StatelessWidget {
-  const HomePage({Key? key}) : super(key: key);
+class AdminHome extends StatelessWidget {
+  const AdminHome({Key? key}) : super(key: key);
 
   Future<void> _signOut(BuildContext context) async {
     try {
@@ -32,7 +32,7 @@ class HomePage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: Text('Home Page'),
+        title: Text('Admin Home Page'),
         actions: <Widget>[
           TextButton(
             child: Text(
