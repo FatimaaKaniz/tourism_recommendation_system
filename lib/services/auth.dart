@@ -7,7 +7,6 @@ class Auth implements AuthBase {
   final _firebaseAuth = FirebaseAuth.instance;
   bool _isCurrentUserAdmin = false;
 
-
   bool get isCurrentUserAdmin => _isCurrentUserAdmin;
 
   @override
@@ -34,16 +33,21 @@ class Auth implements AuthBase {
 
   @override
   Future<User?> createUserWithEmailAndPassword(
-      String email, String password, bool isAdmin) async {
+      String email, String password, bool isAdmin, String name) async {
     try {
       final userCredentials = await _firebaseAuth
           .createUserWithEmailAndPassword(email: email, password: password);
       _isCurrentUserAdmin = isAdmin;
-
+      await userCredentials.user?.updateDisplayName(name);
       return userCredentials.user;
     } catch (e) {
-      rethrow;
+      throw Exception('Something Went Wrong! /nPlease Try Again.');
     }
+  }
+
+  Future<void> terminateGoogleSignIn() async {
+    final googleSignIn = GoogleSignIn();
+    await googleSignIn.signOut();
   }
 
   Future<List> initializeGoogleSignIn() async {
@@ -59,12 +63,13 @@ class Auth implements AuthBase {
             message: 'Missing Google ID Token');
       }
     } catch (e) {
-      rethrow;
+      throw Exception('Something Went Wrong! /nPlease Try Again.');
     }
   }
 
   @override
-  Future<User?> signInWithGoogle(GoogleSignInAuthentication googleAuth, bool isAdmin) async {
+  Future<User?> signInWithGoogle(
+      GoogleSignInAuthentication googleAuth, bool isAdmin) async {
     try {
       var userCredentials = await _firebaseAuth
           .signInWithCredential(GoogleAuthProvider.credential(
@@ -74,7 +79,7 @@ class Auth implements AuthBase {
       _isCurrentUserAdmin = isAdmin;
       return userCredentials.user;
     } catch (e) {
-      rethrow;
+      throw Exception('Something Went Wrong! /nPlease Try Again.');
     }
   }
 
@@ -95,13 +100,15 @@ class Auth implements AuthBase {
           );
 
           return userCredential.user;
-        } catch (e) {
-          var error = e.toString().split("[")[1].split("]");
-          var errorCode = error[0].split("/");
+        } on FirebaseAuthException catch (e) {
           throw FirebaseAuthException(
-            code: errorCode[errorCode.length - 1],
-            message: error[1],
+            code: e.code,
+            message: e.message,
           );
+        } on Exception catch (_) {
+          throw FirebaseAuthException(
+              code: 'Internal_error',
+              message: 'Something Went Wrong! /nPlease Try Again.');
         }
       case FacebookLoginStatus.cancel:
         throw FirebaseAuthException(
@@ -120,8 +127,7 @@ class Auth implements AuthBase {
 
   @override
   Future<void> signOut() async {
-    final googleSignIn = GoogleSignIn();
-    await googleSignIn.signOut();
+    await terminateGoogleSignIn();
     final facebookLogin = FacebookLogin();
     await facebookLogin.logOut();
     await _firebaseAuth.signOut();
@@ -130,5 +136,4 @@ class Auth implements AuthBase {
   Future<void> sendPasswordResetEmail(String email) async {
     await _firebaseAuth.sendPasswordResetEmail(email: email);
   }
-
 }

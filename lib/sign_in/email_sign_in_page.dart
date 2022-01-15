@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:tourism_recommendation_system/sign_in/email_sign_in_form.dart';
 
 class EmailSignInPage extends StatelessWidget {
-  void p() {
-    print('hassan');
-  }
 
   @override
   Widget build(BuildContext context) {

@@ -74,4 +74,5 @@ class EmailAndPasswordValidators {
   final StringValidator emailSubmitValidator = EmailSubmitRegexValidator();
   final StringValidator passwordRegisterSubmitValidator = MinLengthStringValidator(8);
   final StringValidator passwordSignInSubmitValidator = NonEmptyStringValidator();
+  final StringValidator nameValidator = NonEmptyStringValidator();
 }

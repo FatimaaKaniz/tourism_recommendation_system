@@ -2,55 +2,62 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
 
 Future<bool?> showAlertDialog({
   required BuildContext context,
   required String title,
   required String content,
   String? cancelActionText,
+  AlertType alertType = AlertType.info,
+  bool useCupertinoType = false,
   required String defaultActionText,
 }) async {
-  if (kIsWeb || !Platform.isIOS) {
-    return showDialog(
+  if (Platform.isIOS || useCupertinoType) {
+    return showCupertinoDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => CupertinoAlertDialog(
         title: Text(title),
         content: Text(content),
         actions: <Widget>[
           if (cancelActionText != null)
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
+            CupertinoDialogAction(
               child: Text(cancelActionText),
+              onPressed: () => Navigator.of(context, rootNavigator: true).pop(false),
             ),
-          TextButton(
+          CupertinoDialogAction(
             child: Text(defaultActionText),
-            onPressed: () => Navigator.of(context).pop(true),
+            onPressed: () => Navigator.of(context, rootNavigator: true).pop(true),
           ),
         ],
       ),
     );
   }
-  return showCupertinoDialog(
+  return Alert(
     context: context,
-    builder: (context) => CupertinoAlertDialog(
-      title: Text(title),
-      content: Text(content),
-      actions: <Widget>[
-        if (cancelActionText != null)
-          CupertinoDialogAction(
-            child: Text(cancelActionText),
-            onPressed: () => Navigator.of(context).pop(false),
+    title: title,
+    desc: content,
+    type: alertType,
+    buttons: [
+      if (cancelActionText != null)
+        DialogButton(
+          onPressed: () => Navigator.of(context, rootNavigator: true).pop(false),
+          child: Text(
+            cancelActionText,
+            style: TextStyle(color: Colors.white),
           ),
-        CupertinoDialogAction(
-          child: Text(defaultActionText),
-          onPressed: () => Navigator.of(context).pop(true),
         ),
-      ],
-    ),
-  );
+      DialogButton(
+        child: Text(
+          defaultActionText,
+          style: TextStyle(color: Colors.white),
+        ),
+        onPressed: () => Navigator.of(context, rootNavigator: true).pop(true),
+      ),
+    ],
+  ).show();
 }
 
 Future<void> showExceptionAlertDialog({
@@ -60,12 +67,29 @@ Future<void> showExceptionAlertDialog({
 }) =>
     showAlertDialog(
       context: context,
+      alertType: AlertType.error,
       title: title,
       content: _message(exception),
       defaultActionText: 'OK',
     );
 
+Future<bool?> showQuestionAlertDialog({
+  required BuildContext context,
+  required String title,
+  required String content,
+  String? cancelActionText,
+  required String defaultActionText,
+}) =>
+    showAlertDialog(
+        context: context,
+        alertType: AlertType.question,
+        title: title,
+        content: content,
+        defaultActionText: defaultActionText,
+        cancelActionText: cancelActionText);
+
 String _message(dynamic exception) {
+  print(exception);
   if (exception is FirebaseException) {
     return exception.message ?? exception.toString();
   }

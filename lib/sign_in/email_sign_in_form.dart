@@ -4,11 +4,11 @@ import 'package:flutter/services.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:social_login_buttons/social_login_buttons.dart';
-import 'package:tourism_recommendation_system/custom_widgets/dialogs/alert_dialogs.dart';
+import 'package:tourism_recommendation_system/custom_packages/widgets/dialogs/alert_dialogs.dart';
+import 'package:tourism_recommendation_system/models/email_sign_in_model.dart';
 import 'package:tourism_recommendation_system/models/user_model.dart';
 import 'package:tourism_recommendation_system/services/auth_base.dart';
 import 'package:tourism_recommendation_system/services/database.dart';
-import '../models/email_sign_in_model.dart';
 
 class EmailSignInForm extends StatefulWidget {
   EmailSignInForm({required this.model, required this.db});
@@ -30,13 +30,12 @@ class EmailSignInForm extends StatefulWidget {
   }
 
   @override
-  _EmailSignInFormState createState() =>
-      _EmailSignInFormState();
+  _EmailSignInFormState createState() => _EmailSignInFormState();
 }
 
-class _EmailSignInFormState
-    extends State<EmailSignInForm> {
+class _EmailSignInFormState extends State<EmailSignInForm> {
   final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final FocusScopeNode _node = FocusScopeNode();
 
@@ -68,6 +67,8 @@ class _EmailSignInFormState
                   message: 'Restricted User Type!'),
             );
           }
+        }else{
+          success = await model.submit(context);
         }
       } else {
         success = await model.submit(context);
@@ -87,6 +88,7 @@ class _EmailSignInFormState
       _showSignInError(context, e);
       _emailController.clear();
       _passwordController.clear();
+      _nameController.clear();
     }
   }
 
@@ -94,9 +96,9 @@ class _EmailSignInFormState
     model.updateFormType(formType);
     _emailController.clear();
     _passwordController.clear();
+    _nameController.clear();
   }
 
-  //
   Widget _buildHeader() {
     if (model.isLoading) {
       return SizedBox(
@@ -123,6 +125,9 @@ class _EmailSignInFormState
 
   List<Widget> _buildChildren() {
     return [
+      if (model.formType == EmailSignInFormType.register) ...<Widget>[
+        _buildNameTextField(),
+      ],
       _buildEmailTextField(),
       if (model.formType != EmailSignInFormType.forgotPassword) ...<Widget>[
         SizedBox(height: 8.0),
@@ -179,15 +184,16 @@ class _EmailSignInFormState
               onPressed: () => _signInWithFacebook(context),
               mode: SocialLoginButtonMode.single,
             ),
-          ]
+          ],
         ],
       ),
     ];
   }
 
-  void _showSignInError(BuildContext context, Exception exception,[ bool isSignIn = true]) {
+  void _showSignInError(BuildContext context, Exception exception,
+      [bool isSignIn = true]) {
     showExceptionAlertDialog(
-      title: isSignIn ? 'Sign in failed': 'Registration Failed',
+      title: isSignIn ? 'Sign in failed' : 'Registration Failed',
       exception: exception,
       context: context,
     );
@@ -205,6 +211,7 @@ class _EmailSignInFormState
   Future<bool> canLogin(String email, bool isAdmin) async {
     final users = await db.usersStream().first;
     final allUsers = users.map((user) => user).toList();
+    print(allUsers);
     bool _isAdmin =
         allUsers.singleWhere((user) => user.email == email).isAdmin!;
     if (_isAdmin == isAdmin) {
@@ -229,6 +236,7 @@ class _EmailSignInFormState
         if (await canLogin(email, model.isAdmin)) {
           await auth.signInWithGoogle(googleAuth, model.isAdmin);
         } else {
+          await auth.terminateGoogleSignIn();
           throw FirebaseAuthException(
               code: 'ERROR_OPERATION_NOT_ALLOWED',
               message: 'Restricted User Type!');
@@ -247,6 +255,10 @@ class _EmailSignInFormState
     try {
       final auth = Provider.of<AuthBase>(context, listen: false);
       await auth.signInWithFacebook();
+      if (!await checkIfUserExists(auth.currentUser!.email!)) {
+        db.setUser(MyUser(email: auth.currentUser!.email!, isAdmin: false),
+            auth.currentUser!.uid);
+      }
     } on Exception catch (e) {
       _showSignInError(context, e);
     } finally {
@@ -257,7 +269,8 @@ class _EmailSignInFormState
   }
 
   Widget _buildEmailTextField() {
-    return TextField(
+    return TextFormField(
+      autofillHints: [AutofillHints.email],
       controller: _emailController,
       decoration: InputDecoration(
         labelText: 'Email',
@@ -277,15 +290,44 @@ class _EmailSignInFormState
     );
   }
 
+  Widget _buildNameTextField() {
+    return TextFormField(
+      autofillHints: [AutofillHints.name],
+      controller: _nameController,
+      decoration: InputDecoration(
+        labelText: 'Name',
+        errorText: model.nameErrorText,
+        enabled: !model.isLoading,
+      ),
+      autocorrect: false,
+      textInputAction: TextInputAction.next,
+      keyboardType: TextInputType.name,
+      keyboardAppearance: Brightness.light,
+      onChanged: model.updateName,
+      onEditingComplete: _emailEditingComplete,
+    );
+  }
+
   Widget _buildPasswordTextField() {
-    return TextField(
+    return TextFormField(
+      autofillHints: [AutofillHints.password],
       controller: _passwordController,
       decoration: InputDecoration(
         labelText: model.passwordLabelText,
         errorText: model.passwordErrorText,
         enabled: !model.isLoading,
+        suffixIcon: IconButton(
+          alignment: Alignment.bottomRight,
+          icon: model.showPassword
+              ? Icon(Icons.visibility)
+              : Icon(Icons.visibility_off),
+          color: model.showPassword ? Colors.teal : Colors.grey,
+          onPressed: () {
+            model.updateWith(showPassword: !model.showPassword);
+          },
+        ),
       ),
-      obscureText: true,
+      obscureText: !model.showPassword,
       autocorrect: false,
       textInputAction: TextInputAction.done,
       keyboardAppearance: Brightness.light,
@@ -405,10 +447,16 @@ class _EmailSignInFormState
             borderOnForeground: true,
             child: Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: _buildChildren(),
+              child: AutofillGroup(
+                onDisposeAction:
+                    model.formType == EmailSignInFormType.forgotPassword
+                        ? AutofillContextAction.commit
+                        : AutofillContextAction.commit,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: _buildChildren(),
+                ),
               ),
             ),
           ),

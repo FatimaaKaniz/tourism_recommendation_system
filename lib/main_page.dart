@@ -82,12 +82,14 @@ class MainPage extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
                   child: SocialLoginButton(
                     buttonType: SocialLoginButtonType.generalLogin,
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const LandingPage(),
-                      ),
-                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const LandingPage(),
+                        ),
+                      );
+                    },
                     text: 'Continue',
                     fontSize: 20,
                     borderRadius: 50,

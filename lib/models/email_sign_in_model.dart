@@ -1,8 +1,7 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:tourism_recommendation_system/models/user_model.dart';
 import 'package:tourism_recommendation_system/services/auth_base.dart';
-import 'package:tourism_recommendation_system/sign_in/validators.dart';
+import 'package:tourism_recommendation_system/custom_packages/validators.dart';
 import 'package:provider/provider.dart';
 import 'package:tourism_recommendation_system/services/database.dart';
 
@@ -17,6 +16,8 @@ class EmailSignInModel with EmailAndPasswordValidators, ChangeNotifier {
     this.isLoading = false,
     this.submitted = false,
     this.isAdmin = false,
+    this.showPassword = false,
+    this.name = '',
   });
 
   final AuthBase auth;
@@ -26,6 +27,8 @@ class EmailSignInModel with EmailAndPasswordValidators, ChangeNotifier {
   bool isLoading;
   bool submitted;
   bool isAdmin;
+  bool showPassword;
+  String name;
 
   Future<bool> submit(BuildContext context) async {
     final db = Provider.of<Database>(context, listen: false);
@@ -41,7 +44,7 @@ class EmailSignInModel with EmailAndPasswordValidators, ChangeNotifier {
           await auth.signInWithEmailAndPassword(email, password, isAdmin);
           break;
         case EmailSignInFormType.register:
-          await auth.createUserWithEmailAndPassword(email, password, isAdmin);
+          await auth.createUserWithEmailAndPassword(email, password, isAdmin, name);
           db.setUser(MyUser(isAdmin: this.isAdmin, email: email),
               auth.currentUser!.uid);
           break;
@@ -58,6 +61,7 @@ class EmailSignInModel with EmailAndPasswordValidators, ChangeNotifier {
   }
 
   void updateEmail(String email) => updateWith(email: email);
+  void updateName(String name) => updateWith(name: name);
 
   void updatePassword(String password) => updateWith(password: password);
 
@@ -65,6 +69,8 @@ class EmailSignInModel with EmailAndPasswordValidators, ChangeNotifier {
     updateWith(
       email: '',
       password: '',
+      isAdmin: false,
+      name: '',
       formType: formType,
       isLoading: false,
       submitted: false,
@@ -78,6 +84,8 @@ class EmailSignInModel with EmailAndPasswordValidators, ChangeNotifier {
     bool? isLoading,
     bool? submitted,
     bool? isAdmin,
+    bool? showPassword,
+    String? name,
   }) {
     this.email = email ?? this.email;
     this.password = password ?? this.password;
@@ -85,6 +93,9 @@ class EmailSignInModel with EmailAndPasswordValidators, ChangeNotifier {
     this.isLoading = isLoading ?? this.isLoading;
     this.submitted = submitted ?? this.submitted;
     this.isAdmin = isAdmin ?? this.isAdmin;
+    this.showPassword = showPassword ?? this.showPassword;
+    this.name =name ?? this.name;
+
     notifyListeners();
   }
 
@@ -146,6 +157,10 @@ class EmailSignInModel with EmailAndPasswordValidators, ChangeNotifier {
     return passwordSignInSubmitValidator.isValid(password);
   }
 
+  bool get canSubmitName {
+      return nameValidator.isValid(name);
+  }
+
   bool get canSubmit {
     final bool canSubmitFields = formType == EmailSignInFormType.forgotPassword
         ? canSubmitEmail
@@ -164,6 +179,11 @@ class EmailSignInModel with EmailAndPasswordValidators, ChangeNotifier {
     final bool showErrorText = submitted && !canSubmitPassword;
     final String errorText =
         password.isEmpty ? 'Password can\'t be empty' : 'Password is too short';
+    return showErrorText ? errorText : null;
+  }
+  String? get nameErrorText {
+    final bool showErrorText = submitted && !canSubmitName;
+    final String errorText ='Name can\'t be empty' ;
     return showErrorText ? errorText : null;
   }
 }

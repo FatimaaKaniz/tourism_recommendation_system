@@ -40,6 +40,11 @@ dependencies:
   google_fonts: ^2.2.0
   animated_text_kit: ^4.2.1
   loading_animation_widget: ^0.0.2+2
+  intl_phone_number_input: ^0.7.0+2
+  rflutter_alert:
+    git:
+      url: https://github.com/FatimaaKaniz/rflutter_alert
+
 
 flutter_icons:
   android: "launcher_icon"
