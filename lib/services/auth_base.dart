@@ -8,8 +8,6 @@ abstract class AuthBase {
 
   Stream<User?> authStateChanges();
 
-  Future<User?> signInAnonymously(bool isAdmin);
-
   Future<User?> signInWithGoogle(
       GoogleSignInAuthentication googleAuth, bool isAdmin);
 
@@ -18,6 +16,8 @@ abstract class AuthBase {
   Future<void> terminateGoogleSignIn();
 
   Future<User?> signInWithFacebook();
+
+  void setCurrentUserAdmin(bool value);
 
   Future<User?> createUserWithEmailAndPassword(
       String email, String password, bool isAdmin, String name);

@@ -7,6 +7,7 @@ import 'package:tourism_recommendation_system/home/profile/profile_page.dart';
 import 'package:tourism_recommendation_system/home/tab_items.dart';
 import 'package:tourism_recommendation_system/models/user_model.dart';
 import 'package:tourism_recommendation_system/services/auth_base.dart';
+import 'package:tourism_recommendation_system/services/database.dart';
 
 class MainHomePage extends StatefulWidget {
   const MainHomePage({Key? key}) : super(key: key);
@@ -25,14 +26,13 @@ class _MainHomePageState extends State<MainHomePage> {
 
   Map<TabItem, WidgetBuilder> get widgetBuilders {
     final auth = Provider.of<AuthBase>(context, listen: false);
-
     return {
       TabItem.home: (_) => auth.isCurrentUserAdmin ? AdminHome() : HomePage(),
       TabItem.profile: (context) => ChangeNotifierProvider<MyUser>(
             create: (_) => MyUser(
-              email: auth.currentUser!.email,
-              isAdmin: auth.isCurrentUserAdmin,
-              name: auth.currentUser!.displayName,
+              email: auth.currentUser?.email,
+              isAdmin: auth.currentUser == null ? false: auth.isCurrentUserAdmin,
+              name: auth.currentUser?.displayName,
             ),
             child: ProfilePage(),
           ),

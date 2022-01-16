@@ -41,6 +41,7 @@ dependencies:
   animated_text_kit: ^4.2.1
   loading_animation_widget: ^0.0.2+2
   intl_phone_number_input: ^0.7.0+2
+  shared_preferences: ^2.0.12
   rflutter_alert:
     git:
       url: https://github.com/FatimaaKaniz/rflutter_alert

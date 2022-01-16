@@ -1,6 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 import 'package:provider/provider.dart';
 import 'package:tourism_recommendation_system/custom_packages/avatar.dart';
 import 'package:tourism_recommendation_system/custom_packages/widgets/dialogs/alert_dialogs.dart';
@@ -8,8 +7,6 @@ import 'package:tourism_recommendation_system/models/user_model.dart';
 import 'package:tourism_recommendation_system/services/auth_base.dart';
 
 class ProfilePage extends StatelessWidget {
-  TextEditingController _textEditingController = TextEditingController();
-
   Future<void> _signOut(BuildContext context) async {
     try {
       final auth = Provider.of<AuthBase>(context, listen: false);
@@ -50,7 +47,7 @@ class ProfilePage extends StatelessWidget {
             onPressed: () => _confirmSignOut(context),
           ),
         ],
-        bottom: PreferredSize(
+        bottom:  PreferredSize(
           preferredSize: Size.fromHeight(130),
           child: _buildUserInfo(auth.currentUser!, user),
         ),
@@ -87,7 +84,7 @@ class ProfilePage extends StatelessWidget {
                         SizedBox(
                           width: 250,
                           child: Text(
-                            user.name!,
+                            user.name ?? "",
                             style: TextStyle(
                               fontSize: 20,
                             ),
@@ -95,19 +92,18 @@ class ProfilePage extends StatelessWidget {
                         )
                       ] else ...<Widget>[
                         SizedBox(
-                          height: 30,
+                          height: 50,
                           width: 230,
-                          child: TextField(
+                          child: TextFormField(
+                            initialValue: user.name ?? "",
                             style: TextStyle(fontSize: 20),
-                            controller: _textEditingController,
                             decoration: InputDecoration(
-                              errorText:
-                                  _textEditingController.text.trim() == ""
-                                      ? "Name can't be empty!"
-                                      : null,
+                              errorText: user.name?.trim() == ""
+                                  ? "Name can't be empty!"
+                                  : null,
                             ),
                             autocorrect: false,
-                            textInputAction: TextInputAction.next,
+                            textInputAction: TextInputAction.done,
                             keyboardType: TextInputType.name,
                             keyboardAppearance: Brightness.light,
                             onChanged: user.updateName,
@@ -136,15 +132,12 @@ class ProfilePage extends StatelessWidget {
                           if (user.isNameEditAble) {
                             if (user.canNameSubmit) {
                               user.updateWith(
-                                  name: _textEditingController.value.text,
                                   isNameEditAble: !user.isNameEditAble);
                               auth.currentUser!.updateDisplayName(user.name);
                             }
                           } else {
                             user.updateWith(
                                 isNameEditAble: !user.isNameEditAble);
-                            _textEditingController =
-                                TextEditingController(text: user.name);
                           }
                         },
                       ),
