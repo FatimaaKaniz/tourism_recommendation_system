@@ -19,8 +19,8 @@ class CupertinoHomeScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CupertinoTabScaffold(
-      backgroundColor: Colors.teal,
       tabBar: CupertinoTabBar(
+        backgroundColor: Colors.grey.shade200,
         items: [
           _buildItem(TabItem.home),
           _buildItem(TabItem.profile),
@@ -39,7 +39,7 @@ class CupertinoHomeScaffold extends StatelessWidget {
 
   BottomNavigationBarItem _buildItem(TabItem tabItem) {
     final itemData = TabItemData.allTabs[tabItem];
-    final color = currentTab == tabItem ? Colors.indigo : Colors.grey;
+    final color = currentTab == tabItem ? Colors.teal : Colors.grey;
     return BottomNavigationBarItem(
       icon: Icon(
         itemData?.icon,

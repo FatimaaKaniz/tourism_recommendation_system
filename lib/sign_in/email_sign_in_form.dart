@@ -211,7 +211,6 @@ class _EmailSignInFormState extends State<EmailSignInForm> {
   Future<bool> canLogin(String email, bool isAdmin) async {
     final users = await db.usersStream().first;
     final allUsers = users.map((user) => user).toList();
-    print(allUsers);
     bool _isAdmin =
         allUsers.singleWhere((user) => user.email == email).isAdmin!;
     if (_isAdmin == isAdmin) {

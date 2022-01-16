@@ -4,7 +4,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_place/google_place.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
+
 
 Future<bool?> showAlertDialog({
   required BuildContext context,
@@ -25,11 +27,13 @@ Future<bool?> showAlertDialog({
           if (cancelActionText != null)
             CupertinoDialogAction(
               child: Text(cancelActionText),
-              onPressed: () => Navigator.of(context, rootNavigator: true).pop(false),
+              onPressed: () =>
+                  Navigator.of(context, rootNavigator: true).pop(false),
             ),
           CupertinoDialogAction(
             child: Text(defaultActionText),
-            onPressed: () => Navigator.of(context, rootNavigator: true).pop(true),
+            onPressed: () =>
+                Navigator.of(context, rootNavigator: true).pop(true),
           ),
         ],
       ),
@@ -43,7 +47,8 @@ Future<bool?> showAlertDialog({
     buttons: [
       if (cancelActionText != null)
         DialogButton(
-          onPressed: () => Navigator.of(context, rootNavigator: true).pop(false),
+          onPressed: () =>
+              Navigator.of(context, rootNavigator: true).pop(false),
           child: Text(
             cancelActionText,
             style: TextStyle(color: Colors.white),
@@ -89,7 +94,6 @@ Future<bool?> showQuestionAlertDialog({
         cancelActionText: cancelActionText);
 
 String _message(dynamic exception) {
-  print(exception);
   if (exception is FirebaseException) {
     return exception.message ?? exception.toString();
   }

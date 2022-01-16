@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:tourism_recommendation_system/home/admin_home.dart';
+import 'package:tourism_recommendation_system/home/admin/admin_home.dart';
 import 'package:tourism_recommendation_system/home/cupertino_home_scaffold.dart';
 import 'package:tourism_recommendation_system/home/homepage.dart';
 import 'package:tourism_recommendation_system/home/profile/profile_page.dart';
