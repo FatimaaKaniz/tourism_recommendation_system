@@ -9,6 +9,7 @@ class Attraction with ChangeNotifier {
       this.attractionType = AttractionType.historical,
       this.googlePlaceId,
       this.submitted = false,
+      this.isUpdate = false,
       this.id});
 
   String? name;
@@ -16,6 +17,8 @@ class Attraction with ChangeNotifier {
   AttractionType? attractionType;
   String? googlePlaceId;
   bool submitted;
+  bool isUpdate;
+  String? address;
 
   String? get nameErrorText => !submitted ||
           (name != null &&
@@ -40,9 +43,13 @@ class Attraction with ChangeNotifier {
       AttractionType? attractionType,
       String? googlePlaceId,
       bool? submitted,
+      bool? isUpdate,
+      String? address,
       String? id}) {
     this.name = name ?? this.name;
+    this.address = address ?? this.address;
     this.submitted = submitted ?? this.submitted;
+    this.isUpdate = isUpdate ?? this.isUpdate;
     this.attractionType = attractionType ?? this.attractionType;
     this.googlePlaceId = googlePlaceId ?? this.googlePlaceId;
     this.id = id ?? this.id;

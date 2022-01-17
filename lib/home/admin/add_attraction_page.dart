@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_place/google_place.dart';
 import 'package:provider/provider.dart';
 import 'package:social_login_buttons/social_login_buttons.dart';
@@ -13,12 +14,13 @@ class AddAttractionsPage extends StatefulWidget {
   const AddAttractionsPage({Key? key, required this.db}) : super(key: key);
   final Database db;
 
-  static Future<void> show(BuildContext context) async {
+  static Future<void> show(BuildContext context,
+      {Attraction? attraction}) async {
     final database = Provider.of<Database>(context, listen: false);
     await Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute(
         builder: (context) => ChangeNotifierProvider(
-          create: (_) => Attraction(),
+          create: (_) => attraction ?? Attraction(),
           child: AddAttractionsPage(
             db: database,
           ),
@@ -37,9 +39,15 @@ class _AddAttractionsPageState extends State<AddAttractionsPage> {
   final googlePlace = GooglePlace(APIKeys.googleMapsAPIKeys);
   String? address;
   String? selectedPlaceId;
+  bool isUpdate = false;
 
   @override
   Widget build(BuildContext context) {
+    final attraction = Provider.of<Attraction>(context);
+    isUpdate = attraction.isUpdate;
+    if (isUpdate) {
+      _getLocationAddress(attraction);
+    }
     return Scaffold(
       floatingActionButtonLocation: FloatingActionButtonLocation.startTop,
       floatingActionButton: CloseButton(
@@ -52,6 +60,7 @@ class _AddAttractionsPageState extends State<AddAttractionsPage> {
 
   Widget _buildContents(BuildContext context) {
     final attraction = Provider.of<Attraction>(context);
+
     return SingleChildScrollView(
       child: Center(
         child: Padding(
@@ -59,7 +68,7 @@ class _AddAttractionsPageState extends State<AddAttractionsPage> {
           child: Column(
             children: [
               Text(
-                'Add Attraction',
+                isUpdate ? 'Update Attraction' : 'Add Attraction',
                 style: TextStyle(
                   fontSize: 18,
                   color: Colors.teal,
@@ -76,7 +85,6 @@ class _AddAttractionsPageState extends State<AddAttractionsPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         TextFormField(
-                          autofillHints: [AutofillHints.name],
                           controller: _nameController,
                           decoration: InputDecoration(
                             labelText: 'Name',
@@ -98,7 +106,9 @@ class _AddAttractionsPageState extends State<AddAttractionsPage> {
                               style: TextStyle(fontSize: 19),
                             ),
                           ),
-                          value: AttractionType.historical,
+                          value: isUpdate
+                              ? attraction.attractionType
+                              : AttractionType.historical,
                           items: AttractionType.values
                               .map((AttractionType attractionType) {
                             return DropdownMenuItem(
@@ -180,7 +190,7 @@ class _AddAttractionsPageState extends State<AddAttractionsPage> {
                         ),
                         SocialLoginButton(
                           buttonType: SocialLoginButtonType.generalLogin,
-                          text: 'Save',
+                          text: isUpdate ? 'Update' : 'Save',
                           borderRadius: 50,
                           backgroundColor: Colors.teal,
                           disabledBackgroundColor: Colors.grey,
@@ -230,23 +240,29 @@ class _AddAttractionsPageState extends State<AddAttractionsPage> {
     final attraction = Provider.of<Attraction>(context, listen: false);
     attraction.updateWith(submitted: true);
     try {
-      final attractions = await widget.db.attractionStream().first;
-      final allPlaceId = attractions.map((job) => job.googlePlaceId).toList();
-
-      if (allPlaceId.contains(attraction.googlePlaceId)) {
-        showAlertDialog(
-          title: 'Place already used!',
-          content: 'Please choose a different place',
-          defaultActionText: 'OK',
-          context: context,
-        );
-      } else {
-        final id = attraction.id ?? widget.db.documentIdFromCurrentDate();
-        attraction.updateWith(id: id);
-        await widget.db.setAttraction(attraction, id);
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Attraction Added successfully!')));
+      if (attraction.isUpdate) {
+        widget.db.updateAttraction(attraction, attraction.id!);
+        Fluttertoast.showToast(msg: 'Attraction Updated Successfully!');
         Navigator.of(context, rootNavigator: true).pop();
+      } else {
+        final attractions = await widget.db.attractionStream().first;
+        final allPlaceId = attractions.map((job) => job.googlePlaceId).toList();
+
+        if (allPlaceId.contains(attraction.googlePlaceId)) {
+          showAlertDialog(
+            title: 'Place already used!',
+            content: 'Please choose a different place',
+            defaultActionText: 'OK',
+            context: context,
+          );
+        } else {
+          final id = attraction.id ?? widget.db.documentIdFromCurrentDate();
+          attraction.updateWith(id: id);
+          await widget.db.setAttraction(attraction, id);
+          Fluttertoast.showToast(msg: 'Attraction Added Successfully!');
+
+          Navigator.of(context, rootNavigator: true).pop();
+        }
       }
     } on FirebaseException catch (e) {
       showExceptionAlertDialog(

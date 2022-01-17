@@ -31,11 +31,11 @@ class AdminHome extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(0, 30, 0, 0),
           child: SizedBox(
-            height: 30,
+              height: 30,
               child: BackButton(
-            color: Colors.teal,
-            onPressed: () {},
-          )),
+                color: Colors.teal,
+                onPressed: () {},
+              )),
         ),
         Center(
           child: Text(
@@ -62,7 +62,10 @@ class AdminHome extends StatelessWidget {
                 //onDismissed: (direction) => _delete(context, job),
                 child: AttractionListTile(
                   attraction: attraction,
-                  onTap: () => () {},
+                  onTap: () {
+                    attraction.updateWith(isUpdate: true);
+                    AddAttractionsPage.show(context, attraction: attraction);
+                  },
                 ),
               ),
             );
