@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
+import 'package:tourism_recommendation_system/custom_packages/widgets/dialogs/alert_dialogs.dart';
 import 'package:tourism_recommendation_system/home/admin/add_attraction_page.dart';
 import 'package:tourism_recommendation_system/home/admin/job_list_tile.dart';
 import 'package:tourism_recommendation_system/home/admin/list_items_builder.dart';
@@ -22,6 +24,23 @@ class AdminHome extends StatelessWidget {
     );
   }
 
+  final leftEditIcon = Container(
+    color: Colors.green,
+    child: Padding(
+      padding: EdgeInsets.fromLTRB(20, 0, 0, 0),
+      child: Icon(Icons.edit),
+    ),
+    alignment: Alignment.centerLeft,
+  );
+  final rightDeleteIcon = Container(
+    color: Colors.red,
+    child: Padding(
+      padding: EdgeInsets.fromLTRB(0, 0, 20, 0),
+      child: Icon(Icons.delete),
+    ),
+    alignment: Alignment.centerRight,
+  );
+
   Widget _buildContents(BuildContext context) {
     final database = Provider.of<Database>(context, listen: false);
     return Column(
@@ -34,7 +53,9 @@ class AdminHome extends StatelessWidget {
               height: 30,
               child: BackButton(
                 color: Colors.teal,
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.of(context, rootNavigator: true).pop();
+                },
               )),
         ),
         Center(
@@ -42,7 +63,7 @@ class AdminHome extends StatelessWidget {
             'Home Page',
             style: TextStyle(
               color: Colors.teal,
-              fontSize: 20,
+              fontSize: 25,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -56,15 +77,19 @@ class AdminHome extends StatelessWidget {
             return ListItemsBuilder<Attraction>(
               snapshot: snapshot,
               itemBuilder: (context, attraction) => Dismissible(
-                key: Key('attraction-${attraction.id}'),
-                background: Container(color: Colors.red),
-                direction: DismissDirection.endToStart,
-                //onDismissed: (direction) => _delete(context, job),
+                key: UniqueKey(),
+                background: leftEditIcon,
+                secondaryBackground: rightDeleteIcon,
+                onDismissed: (direction) {
+                  if (direction == DismissDirection.endToStart)
+                    _delete(context, attraction);
+                  else
+                    _edit(attraction, context);
+                },
                 child: AttractionListTile(
                   attraction: attraction,
                   onTap: () {
-                    attraction.updateWith(isUpdate: true);
-                    AddAttractionsPage.show(context, attraction: attraction);
+                    _edit(attraction, context);
                   },
                 ),
               ),
@@ -73,6 +98,25 @@ class AdminHome extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  void _edit(Attraction attraction, BuildContext context) {
+    attraction.updateWith(isUpdate: true);
+    AddAttractionsPage.show(context, attraction: attraction);
+  }
+
+  Future<void> _delete(BuildContext context, Attraction attraction) async {
+    try {
+      final database = Provider.of<Database>(context, listen: false);
+      await database.deleteAttraction(attraction);
+      Fluttertoast.showToast(msg: "Attraction Deleted!");
+    } on Exception catch (e) {
+      showExceptionAlertDialog(
+        context: context,
+        title: 'Operation failed',
+        exception: e,
+      );
+    }
   }
 
   void _showProfilePage(BuildContext context) {
