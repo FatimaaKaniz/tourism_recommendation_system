@@ -1,37 +1,71 @@
 import 'package:flutter/material.dart';
+import 'package:google_place/google_place.dart';
 import 'package:provider/provider.dart';
+import 'package:tourism_recommendation_system/home/admin/list_items_builder.dart';
+import 'package:tourism_recommendation_system/home/attraction_details_page.dart';
+import 'package:tourism_recommendation_system/home/attraction_list_card.dart';
+import 'package:tourism_recommendation_system/models/attraction_model.dart';
+import 'package:tourism_recommendation_system/services/database.dart';
 
-import 'package:tourism_recommendation_system/models/user_model.dart';
-import 'package:tourism_recommendation_system/home/profile/profile_page.dart';
-import 'package:tourism_recommendation_system/services/auth_base.dart';
+import '../services/api_keys.dart';
 
 class HomePage extends StatelessWidget {
-  const HomePage({Key? key}) : super(key: key);
+  HomePage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Home Page'),
+      floatingActionButton: BackButton(
+        color: Colors.teal,
+        onPressed: () {
+          Navigator.of(context, rootNavigator: true).pop();
+        },
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.startTop,
+      body: _buildContents(context),
     );
   }
 
-  void _showProfilePage(BuildContext context) {
-    final auth = Provider.of<AuthBase>(context, listen: false);
-
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        fullscreenDialog: true,
-        builder: (context) => ChangeNotifierProvider<MyUser>(
-          create: (_) => MyUser(
-            email: auth.currentUser!.email,
-            isAdmin: auth.isCurrentUserAdmin,
-            name: auth.currentUser!.displayName,
+  Widget _buildContents(BuildContext context) {
+    final database = Provider.of<Database>(context, listen: false);
+    final googlePlace = GooglePlace(APIKeys.googleMapsAPIKeys);
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(10, 50, 10, 10),
+          child: Center(
+            child: Text(
+              'Home Page',
+              style: TextStyle(
+                color: Colors.teal,
+                fontSize: 25,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
-          child: ProfilePage(),
         ),
-      ),
+        SizedBox(
+          height: 15,
+        ),
+        Expanded(
+          child: StreamBuilder<List<Attraction>>(
+            stream: database.attractionStream(),
+            builder: (context, snapshot) {
+              return ListItemsBuilder(
+                snapshot: snapshot,
+                itemBuilder: (context, attraction) => AttractionListCard(
+                  attraction: attraction as Attraction,
+                  onTap: () => _showDetailsPage(googlePlace, context,  attraction),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
+  }
+
+  void _showDetailsPage(GooglePlace googlePlace, BuildContext context, Attraction attraction) {
+    AttractionDetailsPage.show(context, googlePlace, attraction);
   }
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:tourism_recommendation_system/models/user_model.dart';
 import 'package:tourism_recommendation_system/services/auth_base.dart';
-import 'package:tourism_recommendation_system/custom_packages/validators.dart';
+import 'package:tourism_recommendation_system/custom_packages/tools/validators.dart';
 import 'package:provider/provider.dart';
 import 'package:tourism_recommendation_system/services/database.dart';
 

@@ -3,7 +3,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 import 'package:tourism_recommendation_system/custom_packages/widgets/dialogs/alert_dialogs.dart';
 import 'package:tourism_recommendation_system/home/admin/add_attraction_page.dart';
-import 'package:tourism_recommendation_system/home/admin/job_list_tile.dart';
+import 'package:tourism_recommendation_system/home/admin/attraction_list_tile.dart';
 import 'package:tourism_recommendation_system/home/admin/list_items_builder.dart';
 import 'package:tourism_recommendation_system/home/profile/profile_page.dart';
 import 'package:tourism_recommendation_system/models/attraction_model.dart';
@@ -43,60 +43,65 @@ class AdminHome extends StatelessWidget {
 
   Widget _buildContents(BuildContext context) {
     final database = Provider.of<Database>(context, listen: false);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(0, 30, 0, 0),
-          child: SizedBox(
+    return SafeArea(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(0, 30, 0, 0),
+            child: SizedBox(
               height: 30,
               child: BackButton(
                 color: Colors.teal,
                 onPressed: () {
                   Navigator.of(context, rootNavigator: true).pop();
                 },
-              )),
-        ),
-        Center(
-          child: Text(
-            'Home Page',
-            style: TextStyle(
-              color: Colors.teal,
-              fontSize: 25,
-              fontWeight: FontWeight.bold,
+              ),
             ),
           ),
-        ),
-        SizedBox(
-          height: 15,
-        ),
-        StreamBuilder<List<Attraction>>(
-          stream: database.attractionStream(),
-          builder: (context, snapshot) {
-            return ListItemsBuilder<Attraction>(
-              snapshot: snapshot,
-              itemBuilder: (context, attraction) => Dismissible(
-                key: UniqueKey(),
-                background: leftEditIcon,
-                secondaryBackground: rightDeleteIcon,
-                onDismissed: (direction) {
-                  if (direction == DismissDirection.endToStart)
-                    _delete(context, attraction);
-                  else
-                    _edit(attraction, context);
-                },
-                child: AttractionListTile(
-                  attraction: attraction,
-                  onTap: () {
-                    _edit(attraction, context);
-                  },
-                ),
+          Center(
+            child: Text(
+              'Home Page',
+              style: TextStyle(
+                color: Colors.teal,
+                fontSize: 25,
+                fontWeight: FontWeight.bold,
               ),
-            );
-          },
-        ),
-      ],
+            ),
+          ),
+          SizedBox(
+            height: 15,
+          ),
+          Expanded(
+            child: StreamBuilder<List<Attraction>>(
+              stream: database.attractionStream(),
+              builder: (context, snapshot) {
+                return ListItemsBuilder<Attraction>(
+                  snapshot: snapshot,
+                  itemBuilder: (context, attraction) => Dismissible(
+                    key: UniqueKey(),
+                    background: leftEditIcon,
+                    secondaryBackground: rightDeleteIcon,
+                    onDismissed: (direction) {
+                      if (direction == DismissDirection.endToStart)
+                        _delete(context, attraction);
+                      else
+                        _edit(attraction, context);
+                    },
+                    child: AttractionListTile(
+                      attraction: attraction,
+                      onTap: () {
+                        _edit(attraction, context);
+                      },
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 

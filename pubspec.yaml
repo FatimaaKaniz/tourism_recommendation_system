@@ -46,6 +46,7 @@ dependencies:
   csc_picker: ^0.2.6
   google_place: ^0.4.3
   dropdown_formfield: ^0.1.4
+  loading_gifs: ^0.3.0
   rflutter_alert:
     git:
       url: https://github.com/FatimaaKaniz/rflutter_alert

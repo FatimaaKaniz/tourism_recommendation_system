@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:intl_phone_number_input/intl_phone_number_input.dart';
-import 'package:tourism_recommendation_system/custom_packages/validators.dart';
+import 'package:tourism_recommendation_system/custom_packages/tools/validators.dart';
 
 class MyUser with ChangeNotifier {
   MyUser({required this.email, required this.isAdmin, this.name, this.phone});

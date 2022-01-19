@@ -20,38 +20,35 @@ class ListItemsBuilder<T> extends StatelessWidget {
       if (items != null && items.isNotEmpty) {
         return _buildList(items);
       } else {
-        return Expanded(child: Center(child: EmptyContent()));
+        return Center(child: EmptyContent());
       }
     } else if (snapshot.hasError) {
-      return Expanded(
-        child: Center(
-          child: EmptyContent(
-            title: 'Something went wrong',
-            message: 'Cant load items right now',
-          ),
+      return Center(
+        child: EmptyContent(
+          title: 'Something went wrong',
+          message: 'Cant load items right now',
         ),
       );
     }
-    return Expanded(
-      child: Center(
-        child: CircularProgressIndicator(),
-      ),
+    return Center(
+      child: CircularProgressIndicator(),
     );
   }
 
   Widget _buildList(List<T> items) {
     return ListView.builder(
-        padding: EdgeInsets.all(10),
-        shrinkWrap: true,
-        itemCount: items.length + 2,
-        itemBuilder: (context, index) {
-          if (index == 0 || index == items.length + 1) {
-            return Container();
-          }
-          return itemBuilder(
-            context,
-            items[index - 1],
-          );
-        });
+      padding: EdgeInsets.all(10),
+      shrinkWrap: true,
+      itemCount: items.length + 2,
+      itemBuilder: (context, index) {
+        if (index == 0 || index == items.length + 1) {
+          return Container();
+        }
+        return itemBuilder(
+          context,
+          items[index - 1],
+        );
+      },
+    );
   }
 }
