@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:google_place/google_place.dart';
 import 'package:loading_gifs/loading_gifs.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:tourism_recommendation_system/custom_packages/tools/GooglePlaceDetails.dart';
 import 'package:tourism_recommendation_system/models/attraction_model.dart';
 
 import '../services/api_keys.dart';
@@ -23,28 +22,12 @@ class _AttractionListCardState extends State<AttractionListCard> {
   final googlePlace = GooglePlace(APIKeys.googleMapsAPIKeys);
   Uint8List? image;
 
-  void getDetails(String placeId) async {
-    String placeIdKey = placeId + "single";
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    if (prefs.containsKey(placeIdKey)) {
-      var h = await getPhoto(prefs.getString(placeIdKey)!);
+  void getDetails(List<String?>? photoRefs) async {
+    if (widget.attraction.photoRef != null) {
+      var img = await getPhoto(widget.attraction.photoRef!.elementAt(0)!);
       setState(() {
-        image = h;
+        image = img;
       });
-    } else {
-      var result = await this.googlePlace.details.get(placeId, fields: "photo");
-      if (result != null && result.result != null && mounted) {
-        var photos = result.result?.photos ?? null;
-        if (photos != null && photos.length > 0) {
-          var h = await getPhoto(photos.elementAt(0).photoReference!);
-          if (mounted) {
-            setState(() {
-              image = h;
-            });
-            prefs.setString(placeIdKey, photos.elementAt(0).photoReference!);
-          }
-        }
-      }
     }
   }
 
@@ -65,7 +48,7 @@ class _AttractionListCardState extends State<AttractionListCard> {
   @override
   void initState() {
     super.initState();
-    getDetails(widget.attraction.googlePlaceId!);
+    getDetails(widget.attraction.photoRef!);
   }
 
   @override
@@ -85,9 +68,11 @@ class _AttractionListCardState extends State<AttractionListCard> {
               borderRadius: BorderRadius.circular(20),
               image: DecorationImage(
                 image: image == null
-                    ? AssetImage(cupertinoActivityIndicatorSmall,) as ImageProvider
+                    ? AssetImage(
+                        cupertinoActivityIndicatorSmall,
+                      ) as ImageProvider
                     : MemoryImage(image!),
-                fit: image== null? BoxFit.contain: BoxFit.cover,
+                fit: image == null ? BoxFit.contain : BoxFit.cover,
               ),
             ),
             child: Padding(

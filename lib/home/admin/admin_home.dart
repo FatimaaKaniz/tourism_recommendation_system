@@ -62,7 +62,7 @@ class AdminHome extends StatelessWidget {
           ),
           Center(
             child: Text(
-              'Home Page',
+              'Attractions',
               style: TextStyle(
                 color: Colors.teal,
                 fontSize: 25,
@@ -124,21 +124,5 @@ class AdminHome extends StatelessWidget {
     }
   }
 
-  void _showProfilePage(BuildContext context) {
-    final auth = Provider.of<AuthBase>(context, listen: false);
 
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        fullscreenDialog: true,
-        builder: (context) => ChangeNotifierProvider<MyUser>(
-          create: (_) => MyUser(
-            email: auth.currentUser!.email,
-            isAdmin: auth.isCurrentUserAdmin,
-            name: auth.currentUser!.displayName,
-          ),
-          child: ProfilePage(),
-        ),
-      ),
-    );
-  }
 }

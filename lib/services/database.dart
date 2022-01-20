@@ -9,8 +9,6 @@ abstract class Database {
 
   Future<void> setUser(MyUser user, String uid);
 
-  Future<void> updateUser(MyUser user, String uid);
-
   Stream<List<MyUser>> usersStream();
 
   Future<void> deleteAttraction(Attraction attraction);
@@ -41,23 +39,13 @@ class FireStoreDatabase implements Database {
       );
 
   @override
-  Future<void> updateUser(MyUser user, String uid) async {
-    await _service.deleteData(path: APIPath.user(uid));
-    _service.setData(
-      path: APIPath.user(uid),
-      data: user.toMap(),
-    );
-  }
-
-  @override
   Stream<List<MyUser>> usersStream() => _service.collectionStream(
         path: APIPath.users(),
         builder: (data, documentId) => MyUser.fromMap(data, documentId),
       );
 
   @override
-  Future<void> deleteAttraction(Attraction attraction) =>
-      _service.deleteData(
+  Future<void> deleteAttraction(Attraction attraction) => _service.deleteData(
         path: APIPath.attraction(attraction.id!),
       );
 
@@ -69,14 +57,8 @@ class FireStoreDatabase implements Database {
       );
 
   @override
-  Future<void> updateAttraction(
-      Attraction attraction) async {
-    await _service.deleteData(path: APIPath.attraction(attraction.id!));
-    _service.setData(
-      path: APIPath.attraction(attraction.id!),
-      data: attraction.toMap(),
-    );
-  }
+  Future<void> updateAttraction(Attraction attraction) async =>
+      setAttraction(attraction, attraction.id!);
 
   @override
   Stream<List<Attraction>> attractionStream() => _service.collectionStream(

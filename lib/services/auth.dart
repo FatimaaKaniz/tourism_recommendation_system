@@ -2,17 +2,19 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_login_facebook/flutter_login_facebook.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:tourism_recommendation_system/models/user_model.dart';
 import 'package:tourism_recommendation_system/services/auth_base.dart';
 
 class Auth implements AuthBase {
-  final currentUserAdminSharedPref = "isCurrentuserAdmin_tourismManagementSystem";
   final _firebaseAuth = FirebaseAuth.instance;
-  bool _isCurrentUserAdmin = false;
+  bool? _isCurrentUserAdmin ;
+  MyUser? _myUser;
 
   void setCurrentUserAdmin(bool value){
     _isCurrentUserAdmin = value;
   }
-  bool get isCurrentUserAdmin => _isCurrentUserAdmin;
+  bool? get isCurrentUserAdmin => _isCurrentUserAdmin;
+  MyUser? get myUser => _myUser;
 
   @override
   Stream<User?> authStateChanges() => _firebaseAuth.authStateChanges();
@@ -20,13 +22,12 @@ class Auth implements AuthBase {
   @override
   User? get currentUser => _firebaseAuth.currentUser;
 
+
   @override
   Future<User?> signInWithEmailAndPassword(
       String email, String password, bool isAdmin) async {
     final userCredentials = await _firebaseAuth.signInWithCredential(
         EmailAuthProvider.credential(email: email, password: password));
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(currentUserAdminSharedPref, isAdmin);
     _isCurrentUserAdmin = isAdmin;
     return userCredentials.user;
   }
@@ -37,8 +38,6 @@ class Auth implements AuthBase {
     try {
       final userCredentials = await _firebaseAuth
           .createUserWithEmailAndPassword(email: email, password: password);
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(currentUserAdminSharedPref, isAdmin);
       _isCurrentUserAdmin = isAdmin;
       await userCredentials.user?.updateDisplayName(name);
       return userCredentials.user;
@@ -78,8 +77,6 @@ class Auth implements AuthBase {
         idToken: googleAuth.idToken,
         accessToken: googleAuth.accessToken,
       ));
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(currentUserAdminSharedPref, isAdmin);
       _isCurrentUserAdmin = isAdmin;
       return userCredentials.user;
     } catch (e) {
@@ -94,8 +91,6 @@ class Auth implements AuthBase {
       FacebookPermission.publicProfile,
       FacebookPermission.email,
     ]);
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(currentUserAdminSharedPref, false);
     _isCurrentUserAdmin = false;
     switch (response.status) {
       case FacebookLoginStatus.success:
@@ -142,4 +137,7 @@ class Auth implements AuthBase {
   Future<void> sendPasswordResetEmail(String email) async {
     await _firebaseAuth.sendPasswordResetEmail(email: email);
   }
+
+  @override
+  void setMyUser(MyUser value) => _myUser = value;
 }

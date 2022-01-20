@@ -35,7 +35,7 @@ class HomePage extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(10, 50, 10, 10),
           child: Center(
             child: Text(
-              'Home Page',
+              'Attractions',
               style: TextStyle(
                 color: Colors.teal,
                 fontSize: 25,

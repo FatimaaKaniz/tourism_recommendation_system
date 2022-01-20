@@ -1,6 +1,7 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-enum TabItem { home, profile}
+enum TabItem { home,saved, profile}
 
 class TabItemData {
   const TabItemData({required this.title, required this.icon});
@@ -10,6 +11,7 @@ class TabItemData {
 
   static const Map<TabItem, TabItemData> allTabs = {
     TabItem.home: TabItemData(title: 'Home', icon: Icons.home),
+    TabItem.saved: TabItemData(title: 'Wish List', icon: CupertinoIcons.heart_solid),
     TabItem.profile: TabItemData(title: 'Profile', icon: Icons.account_circle),
   };
 }

@@ -43,13 +43,15 @@ class _AddAttractionsPageState extends State<AddAttractionsPage> {
   String? selectedPlaceId;
   bool isUpdate = false;
 
-
   @override
   Widget build(BuildContext context) {
     final attraction = Provider.of<Attraction>(context);
     isUpdate = attraction.isUpdate;
     if (isUpdate) {
-      _getLocationAddress(attraction);
+      address = attraction.address!;
+      _nameController = TextEditingController(text: attraction.name);
+      _nameController.selection = TextSelection.fromPosition(
+          TextPosition(offset: _nameController.text.length));
     }
     return Scaffold(
       floatingActionButton: IconButton(
@@ -112,7 +114,7 @@ class _AddAttractionsPageState extends State<AddAttractionsPage> {
                   if (attraction.isUpdate) ...<Widget>[
                     IconButton(
                       onPressed: () {
-                       _deleteAttraction(context);
+                        _deleteAttraction(context);
                       },
                       icon: Icon(
                         Icons.delete_sharp,
@@ -266,17 +268,24 @@ class _AddAttractionsPageState extends State<AddAttractionsPage> {
     );
   }
 
-  _getLocationAddress(Attraction attraction) async {
-    var result = await googlePlace.details
-        .get(attraction.googlePlaceId!, fields: "formatted_address");
+  _getLocationDetails(Attraction attraction) async {
+    var result = await googlePlace.details.get(attraction.googlePlaceId!,
+        fields:
+            "photo,formatted_address,url,website,international_phone_number,type");
     if (result != null && result.result != null && mounted) {
       setState(() {
         address = result.result?.formattedAddress;
-        if (_nameController.text.isEmpty) {
-          _nameController =
-              TextEditingController(text: address?.split(',').elementAt(0));
-          attraction.updateName(address?.split(',').elementAt(0));
-        }
+        _nameController=TextEditingController(text: address?.split(',').elementAt(0));
+        attraction.updateWith(
+          name: address?.split(',').elementAt(0),
+          phone: result.result?.internationalPhoneNumber,
+          address: result.result?.formattedAddress,
+          url: result.result?.url,
+          types: result.result?.types,
+          photoRef:
+              result.result?.photos?.map((e) => e.photoReference).toList(),
+          website: result.result?.website,
+        );
       });
     }
   }
@@ -290,7 +299,8 @@ class _AddAttractionsPageState extends State<AddAttractionsPage> {
     );
     if (selectedPlaceId != null) {
       attraction.updateWith(googlePlaceId: selectedPlaceId);
-      _getLocationAddress(attraction);
+      _getLocationDetails(attraction);
+
     }
   }
 

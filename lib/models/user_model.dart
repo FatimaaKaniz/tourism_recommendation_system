@@ -1,14 +1,19 @@
 import 'package:flutter/cupertino.dart';
-import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 import 'package:tourism_recommendation_system/custom_packages/tools/validators.dart';
 
 class MyUser with ChangeNotifier {
-  MyUser({required this.email, required this.isAdmin, this.name, this.phone});
+  MyUser(
+      {required this.email,
+      required this.isAdmin,
+      this.name,
+      this.savedPlacesIds,
+      this.localAuthEnabled});
 
   String? email;
   bool? isAdmin;
   String? name;
-  String? phone;
+  List<String?>? savedPlacesIds;
+  bool? localAuthEnabled;
 
   bool isNameEditAble = false;
 
@@ -19,14 +24,21 @@ class MyUser with ChangeNotifier {
 
   factory MyUser.fromMap(Map<String, dynamic> data, String documentId) {
     final bool isAdmin = data['isAdmin'];
+    final bool? localAuthEnabled = data['localAuthEnabled'];
     final String email = data['email'];
-    return MyUser(email: email, isAdmin: isAdmin);
+    final List<String?>? savedPlacesIds = data['savedPlacesIds'] != null
+        ? (data['savedPlacesIds'] as List).map((e) => e as String).toList()
+        : null;
+    return MyUser(
+        email: email, isAdmin: isAdmin, savedPlacesIds: savedPlacesIds, localAuthEnabled: localAuthEnabled);
   }
 
   Map<String, dynamic> toMap() {
     return {
       'isAdmin': isAdmin,
       'email': email,
+      'savedPlacesIds': savedPlacesIds,
+      'localAuthEnabled' : localAuthEnabled,
     };
   }
 
@@ -36,15 +48,16 @@ class MyUser with ChangeNotifier {
     String? email,
     bool? isAdmin,
     String? name,
-    String? phone,
     bool? isNameEditAble,
+    List<String?>? savedPlacesIds,
+    bool? localAuthEnabled,
   }) {
     this.email = email ?? this.email;
     this.isAdmin = isAdmin ?? this.isAdmin;
     this.isNameEditAble = isNameEditAble ?? this.isNameEditAble;
-
+    this.savedPlacesIds = savedPlacesIds ?? this.savedPlacesIds;
+    this.localAuthEnabled = localAuthEnabled ?? this.localAuthEnabled;
     this.name = name ?? this.name;
-    this.phone = phone ?? this.phone;
     notifyListeners();
   }
 

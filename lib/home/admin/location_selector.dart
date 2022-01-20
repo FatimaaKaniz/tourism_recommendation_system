@@ -81,9 +81,10 @@ class _LocationSelectorState extends State<LocationSelector> {
                 child: predictions.length == 0 && isLoading
                     ? Center(
                         child: LoadingAnimationWidget.staggeredDotWave(
-                        color: Colors.teal,
-                        size: 65,
-                      ))
+                          color: Colors.teal,
+                          size: 65,
+                        ),
+                      )
                     : ListView.builder(
                         itemCount: predictions.length,
                         itemBuilder: (context, index) {
