@@ -22,11 +22,11 @@ class _WishListPageState extends State<WishListPage> {
   _WishListPageState(this.user);
 
   final MyUser user;
-  Stream<List<Attraction>>? attractions;
+   Stream<List<Attraction>> attractions = Stream.value([]);
 
   @override
   void initState() {
-    Stream<List<Attraction>>? attractions;
+    Stream<List<Attraction>> attractions;
 
     WidgetsBinding.instance?.addPostFrameCallback((_) async {
       attractions = await getAttractions();
@@ -95,10 +95,10 @@ class _WishListPageState extends State<WishListPage> {
     AttractionDetailsPage.show(context, googlePlace, attraction,isSaved: true);
   }
 
-  Future<Stream<List<Attraction>>?> getAttractions() async {
+  Future<Stream<List<Attraction>>> getAttractions() async {
     final db = Provider.of<Database>(context, listen: false);
     var places = user.savedPlacesIds;
-    if (places == null) return null;
+    if (places == null) return Stream.value([]);
     var attractions = await db.attractionStream().first;
 
     List<Attraction> newAttractions =

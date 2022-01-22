@@ -48,18 +48,7 @@ class AdminHome extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(0, 30, 0, 0),
-            child: SizedBox(
-              height: 30,
-              child: BackButton(
-                color: Colors.teal,
-                onPressed: () {
-                  Navigator.of(context, rootNavigator: true).pop();
-                },
-              ),
-            ),
-          ),
+          SizedBox(height: 30),
           Center(
             child: Text(
               'Attractions',

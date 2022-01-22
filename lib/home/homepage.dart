@@ -15,13 +15,7 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: BackButton(
-        color: Colors.teal,
-        onPressed: () {
-          Navigator.of(context, rootNavigator: true).pop();
-        },
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.startTop,
+
       body: _buildContents(context),
     );
   }

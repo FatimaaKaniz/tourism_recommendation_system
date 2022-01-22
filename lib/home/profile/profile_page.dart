@@ -1,12 +1,26 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tourism_recommendation_system/custom_packages/widgets/avatar.dart';
 import 'package:tourism_recommendation_system/custom_packages/widgets/dialogs/alert_dialogs.dart';
 import 'package:tourism_recommendation_system/models/user_model.dart';
 import 'package:tourism_recommendation_system/services/auth_base.dart';
+import 'package:tourism_recommendation_system/services/database.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
+  const ProfilePage({Key? key}) : super(key: key);
+
+  @override
+  _ProfilePageState createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  bool isBioMetricsAvailable = false;
+  final localAuthPrefsKey = 'localAuthEnabled_TourismManagmentSystem_Fatima';
+
   Future<void> _signOut(BuildContext context) async {
     try {
       final auth = Provider.of<AuthBase>(context, listen: false);
@@ -29,6 +43,8 @@ class ProfilePage extends StatelessWidget {
     }
   }
 
+  bool _switchValue = false;
+
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthBase>(context, listen: false);
@@ -47,7 +63,7 @@ class ProfilePage extends StatelessWidget {
             onPressed: () => _confirmSignOut(context),
           ),
         ],
-        bottom:  PreferredSize(
+        bottom: PreferredSize(
           preferredSize: Size.fromHeight(130),
           child: _buildUserInfo(auth.currentUser!, user),
         ),
@@ -180,11 +196,98 @@ class ProfilePage extends StatelessWidget {
                 ),
               ],
             ),
-            SizedBox(height: 20),
+            SizedBox(height: 25),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                  child: Icon(
+                    Icons.fingerprint,
+                    color: Colors.black54,
+                    size: 30,
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    'Biometrics',
+                    style: TextStyle(
+                      fontSize: 20,
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                  child: CupertinoSwitch(
+                    value: _switchValue,
+                    onChanged: _toggleBiometrics,
+                  ),
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(85, 50, 85, 50),
+              child: ElevatedButton.icon(
+                onPressed: () => _deleteUserAccount(auth),
+                icon: Icon(
+                  Icons.delete,
+                  color: Colors.red.shade800,
+                  size: 18,
+                ),
+                label: Text(
+                  'Delete Account',
+                  style: TextStyle(
+                    color: Colors.red.shade800,
+                    fontSize: 18,
+                  ),
+                ),
+                style: ButtonStyle(
+                    backgroundColor: MaterialStateProperty.all(Colors.white),
+                    padding: MaterialStateProperty.all(EdgeInsets.all(18)),
+                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                        RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(50.0),
+                            side: BorderSide(color: Colors.red.shade800)))),
+              ),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  void _deleteUserAccount(AuthBase auth) async {
+    try {
+      await auth.deleteUserAccount();
+      Fluttertoast.showToast(msg: 'Account Deleted Successfully!');
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'requires-recent-login')
+        Fluttertoast.showToast(msg: 'Please Login again to Delete Account!');
+    }
+  }
+
+   _toggleBiometrics(bool val) async {
+    if (!val) {
+      await setNewBiometricValueToSP(val);
+    } else {
+      if (isBioMetricsAvailable) {
+        await setNewBiometricValueToSP(val);
+      } else
+        Fluttertoast.showToast(
+            msg: 'Biometrics is not Available on your device!');
+    }
+  }
+
+  setNewBiometricValueToSP(bool val) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _switchValue = val;
+    });
+    prefs.setBool(localAuthPrefsKey, val);
+    Fluttertoast.showToast(
+        msg: val
+            ? 'Biometric Authentication enabled!'
+            : 'Biometric authentication disabled!');
   }
 
   Widget _buildUserInfo(User firebaseUser, MyUser user) {
@@ -204,5 +307,23 @@ class ProfilePage extends StatelessWidget {
         SizedBox(height: 8),
       ],
     );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    final auth = Provider.of<AuthBase>(context, listen: false);
+
+    WidgetsBinding.instance?.addPostFrameCallback((_) async {
+      bool isAvailable = await auth.isBiometricsAvailable();
+      SharedPreferences preferences = await SharedPreferences.getInstance();
+      var localAuthEnabled = preferences.containsKey(localAuthPrefsKey)
+          ? preferences.getBool(localAuthPrefsKey) ?? false
+          : false;
+      setState(() {
+        isBioMetricsAvailable = isAvailable;
+        _switchValue = localAuthEnabled;
+      });
+    });
   }
 }
