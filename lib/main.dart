@@ -31,7 +31,7 @@ class MyApp extends StatelessWidget {
         ),
         home: SplashScreenView(
           navigateRoute: MainPage(),
-          duration: 5000,
+          duration: 3000,
           imageSize: 300,
           imageSrc: "resources/images/logo.png",
           text: "Tourism Recommendation",

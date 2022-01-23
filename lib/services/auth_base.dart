@@ -6,6 +6,7 @@ abstract class AuthBase {
   User? get currentUser;
 
   bool? get isCurrentUserAdmin;
+
   MyUser? get myUser;
 
   Stream<User?> authStateChanges();
@@ -13,13 +14,20 @@ abstract class AuthBase {
   Future<User?> signInWithGoogle(
       GoogleSignInAuthentication googleAuth, bool isAdmin);
 
-  Future<List> initializeGoogleSignIn();
+  Future<List?> initializeGoogleSignIn();
 
   Future<void> terminateGoogleSignIn();
 
+  Future<void> deleteUserAccount();
+
   Future<User?> signInWithFacebook();
 
+  Future<bool> isBiometricsAvailable();
+
+  Future<bool> authenticateLocally();
+
   void setCurrentUserAdmin(bool value);
+
   void setMyUser(MyUser value);
 
   Future<User?> createUserWithEmailAndPassword(

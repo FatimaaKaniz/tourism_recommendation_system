@@ -33,7 +33,7 @@ class AttractionDetailsPage extends StatefulWidget {
   static Future<void> show(
       BuildContext context, GooglePlace googlePlace, Attraction attraction,
       {bool isSaved = false}) async {
-     await Navigator.of(context, rootNavigator: true).push(
+    await Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute(
         builder: (context) => AttractionDetailsPage(
           attraction: attraction,
@@ -65,6 +65,7 @@ class _AttractionDetailsPageState extends State<AttractionDetailsPage> {
     if (result != null && result.result != null && mounted) {
       setState(() {
         openNow = result.result!.openingHours?.openNow;
+
       });
     }
     if (attraction.photoRef != null && attraction.photoRef!.length > 0) {
@@ -97,7 +98,8 @@ class _AttractionDetailsPageState extends State<AttractionDetailsPage> {
   void initState() {
     super.initState();
     final auth = Provider.of<AuthBase>(context, listen: false);
-    if (attraction.types != null)
+    if (attraction.types != null &&
+        !attraction.types!.contains(attraction.attractionType!.name))
       attraction.types?.add(attraction.attractionType!.name);
     else
       attraction.updateWith(types: [attraction.attractionType!.name]);

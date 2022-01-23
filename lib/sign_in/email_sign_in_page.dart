@@ -6,15 +6,7 @@ class EmailSignInPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: BackButton(
-        color: Colors.teal,
-        onPressed: () {
-          if (MediaQuery.of(context).viewInsets.bottom == 0) {
-            Navigator.pop(context);
-          }
-          FocusScope.of(context).unfocus();
-        },
-      ),
+
       floatingActionButtonLocation: FloatingActionButtonLocation.miniStartTop,
       resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,

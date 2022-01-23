@@ -30,7 +30,7 @@ class EmailSignInModel with EmailAndPasswordValidators, ChangeNotifier {
   bool showPassword;
   String name;
 
-  Future<bool> submit(BuildContext context) async {
+  Future<bool> submit(BuildContext context, {bool? ifExists}) async {
     final db = Provider.of<Database>(context, listen: false);
 
     try {
@@ -42,11 +42,14 @@ class EmailSignInModel with EmailAndPasswordValidators, ChangeNotifier {
       switch (formType) {
         case EmailSignInFormType.signIn:
           await auth.signInWithEmailAndPassword(email, password, isAdmin);
+          await updateUser(db);
           break;
         case EmailSignInFormType.register:
-          await auth.createUserWithEmailAndPassword(email, password, isAdmin, name);
-          db.setUser(MyUser(isAdmin: this.isAdmin, email: email),
-              auth.currentUser!.uid);
+          await auth.createUserWithEmailAndPassword(
+              email, password, isAdmin, name);
+          if (ifExists != null && !ifExists) {
+            await updateUser(db);
+          }
           break;
         case EmailSignInFormType.forgotPassword:
           await auth.sendPasswordResetEmail(email);
@@ -60,7 +63,16 @@ class EmailSignInModel with EmailAndPasswordValidators, ChangeNotifier {
     }
   }
 
+  Future<void> updateUser(Database db) async {
+    var user = MyUser(
+        isAdmin: this.isAdmin,
+        email: email,
+        name: auth.currentUser!.displayName);
+    auth.setMyUser(user);
+  }
+
   void updateEmail(String email) => updateWith(email: email);
+
   void updateName(String name) => updateWith(name: name);
 
   void updatePassword(String password) => updateWith(password: password);
@@ -94,7 +106,7 @@ class EmailSignInModel with EmailAndPasswordValidators, ChangeNotifier {
     this.submitted = submitted ?? this.submitted;
     this.isAdmin = isAdmin ?? this.isAdmin;
     this.showPassword = showPassword ?? this.showPassword;
-    this.name =name ?? this.name;
+    this.name = name ?? this.name;
 
     notifyListeners();
   }
@@ -158,7 +170,7 @@ class EmailSignInModel with EmailAndPasswordValidators, ChangeNotifier {
   }
 
   bool get canSubmitName {
-      return nameValidator.isValid(name);
+    return nameValidator.isValid(name);
   }
 
   bool get canSubmit {
@@ -181,9 +193,10 @@ class EmailSignInModel with EmailAndPasswordValidators, ChangeNotifier {
         password.isEmpty ? 'Password can\'t be empty' : 'Password is too short';
     return showErrorText ? errorText : null;
   }
+
   String? get nameErrorText {
     final bool showErrorText = submitted && !canSubmitName;
-    final String errorText ='Name can\'t be empty' ;
+    final String errorText = 'Name can\'t be empty';
     return showErrorText ? errorText : null;
   }
 }

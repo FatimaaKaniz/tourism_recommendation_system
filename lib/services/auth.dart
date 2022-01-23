@@ -1,19 +1,25 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_login_facebook/flutter_login_facebook.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:local_auth/auth_strings.dart';
+import 'package:local_auth/local_auth.dart';
 import 'package:tourism_recommendation_system/models/user_model.dart';
 import 'package:tourism_recommendation_system/services/auth_base.dart';
 
 class Auth implements AuthBase {
   final _firebaseAuth = FirebaseAuth.instance;
-  bool? _isCurrentUserAdmin ;
+  var localAuth = LocalAuthentication();
+
+  bool? _isCurrentUserAdmin;
+
   MyUser? _myUser;
 
-  void setCurrentUserAdmin(bool value){
+  void setCurrentUserAdmin(bool value) {
     _isCurrentUserAdmin = value;
   }
+
   bool? get isCurrentUserAdmin => _isCurrentUserAdmin;
+
   MyUser? get myUser => _myUser;
 
   @override
@@ -21,7 +27,6 @@ class Auth implements AuthBase {
 
   @override
   User? get currentUser => _firebaseAuth.currentUser;
-
 
   @override
   Future<User?> signInWithEmailAndPassword(
@@ -42,7 +47,7 @@ class Auth implements AuthBase {
       await userCredentials.user?.updateDisplayName(name);
       return userCredentials.user;
     } catch (e) {
-      throw Exception('Something Went Wrong! /nPlease Try Again.');
+      return null;
     }
   }
 
@@ -51,7 +56,7 @@ class Auth implements AuthBase {
     await googleSignIn.signOut();
   }
 
-  Future<List> initializeGoogleSignIn() async {
+  Future<List?> initializeGoogleSignIn() async {
     try {
       final googleSignIn = GoogleSignIn();
       final googleUser = await googleSignIn.signIn();
@@ -64,7 +69,7 @@ class Auth implements AuthBase {
             message: 'Missing Google ID Token');
       }
     } catch (e) {
-      throw Exception('Something Went Wrong! /nPlease Try Again.');
+      return null;
     }
   }
 
@@ -80,7 +85,7 @@ class Auth implements AuthBase {
       _isCurrentUserAdmin = isAdmin;
       return userCredentials.user;
     } catch (e) {
-      throw Exception('Something Went Wrong! /nPlease Try Again.');
+      return null;
     }
   }
 
@@ -140,4 +145,25 @@ class Auth implements AuthBase {
 
   @override
   void setMyUser(MyUser value) => _myUser = value;
+
+  @override
+  Future<void> deleteUserAccount() async {
+    await _firebaseAuth.currentUser!.delete();
+  }
+
+  Future<bool> isBiometricsAvailable() async {
+    var isDeviceSupported = await localAuth.isDeviceSupported();
+    if (isDeviceSupported) {
+      return await localAuth.canCheckBiometrics;
+    }
+    return false;
+  }
+
+  Future<bool> authenticateLocally() async {
+    return await localAuth.authenticate(
+      stickyAuth: true,
+      useErrorDialogs: true,
+      localizedReason: 'Please Authenticate with Biometrics to continue!',
+    );
+  }
 }

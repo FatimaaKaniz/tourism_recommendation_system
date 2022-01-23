@@ -1,15 +1,43 @@
 import 'package:animated_text_kit/animated_text_kit.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:social_login_buttons/social_login_buttons.dart';
-import 'package:tourism_recommendation_system/landing_page.dart';
+import 'package:tourism_recommendation_system/home/generic_home_page.dart';
+import 'package:tourism_recommendation_system/services/auth_base.dart';
+import 'package:tourism_recommendation_system/sign_in/email_sign_in_page.dart';
 
-class MainPage extends StatelessWidget {
-  const MainPage({Key? key}) : super(key: key);
+import 'services/database.dart';
+
+class MainPage extends StatefulWidget {
+  MainPage({Key? key}) : super(key: key);
 
   @override
+  State<StatefulWidget> createState() => _MainPageState();
+}
+
+class _MainPageState extends State<MainPage> {
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    final auth = Provider.of<AuthBase>(context, listen: false);
+    return authenticated
+        ? StreamBuilder<User?>(
+      stream: auth.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.active) {
+          final user = snapshot.data;
+          return user == null ? EmailSignInPage() : MainHomePage();
+        }
+        return Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
+      },
+    )
+        : Scaffold(
       body: Container(
         decoration: BoxDecoration(
           image: DecorationImage(
@@ -82,14 +110,7 @@ class MainPage extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
                   child: SocialLoginButton(
                     buttonType: SocialLoginButtonType.generalLogin,
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => LandingPage(),
-                        ),
-                      );
-                    },
+                    onPressed: () => authenticate(context),
                     text: 'Continue',
                     fontSize: 20,
                     borderRadius: 50,
@@ -102,5 +123,50 @@ class MainPage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  bool isAuthenticating = false;
+  bool authenticated = false;
+  bool localAuthEnabled = false;
+  final localAuthPrefsKey = 'localAuthEnabled_TourismManagmentSystem_Fatima';
+
+  @override
+  void initState() {
+    super.initState();
+    final auth = Provider.of<AuthBase>(context, listen: false);
+
+    if (auth.currentUser != null) {
+      WidgetsBinding.instance?.addPostFrameCallback((_) async {
+        SharedPreferences preferences = await SharedPreferences.getInstance();
+        print(preferences.getBool(localAuthPrefsKey));
+        setState(() {
+          this.localAuthEnabled = preferences.containsKey(localAuthPrefsKey)
+              ? preferences.getBool(localAuthPrefsKey) ?? false
+              : false;
+        });
+      });
+    }
+  }
+
+  Future<void> authenticate(BuildContext context) async {
+    final auth = Provider.of<AuthBase>(context, listen: false);
+
+    if (auth.currentUser == null) {
+      setState(() {
+        this.authenticated = true;
+      });
+      return;
+    }
+    if (localAuthEnabled) {
+      var authenticated = await auth.authenticateLocally();
+      setState(() {
+        this.authenticated = authenticated;
+      });
+      return;
+    }
+    setState(() {
+      this.authenticated = true;
+    });
+    return;
   }
 }

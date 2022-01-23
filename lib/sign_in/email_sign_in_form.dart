@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:social_login_buttons/social_login_buttons.dart';
@@ -67,8 +68,8 @@ class _EmailSignInFormState extends State<EmailSignInForm> {
                   message: 'Restricted User Type!'),
             );
           }
-        }else{
-          success = await model.submit(context);
+        } else {
+          success = await model.submit(context, ifExists: true);
         }
       } else {
         success = await model.submit(context);
@@ -212,7 +213,7 @@ class _EmailSignInFormState extends State<EmailSignInForm> {
     final users = await db.usersStream().first;
     final allUsers = users.map((user) => user).toList();
     bool _isAdmin =
-        allUsers.singleWhere((user) => user.email == email).isAdmin!;
+        allUsers.where((user) => user.email == email).first.isAdmin!;
     if (_isAdmin == isAdmin) {
       return true;
     }
@@ -224,25 +225,30 @@ class _EmailSignInFormState extends State<EmailSignInForm> {
     try {
       model.updateWith(isLoading: true);
       final googleSignInInfo = await auth.initializeGoogleSignIn();
-      final googleAuth = googleSignInInfo.asMap()[0];
-      final email = googleSignInInfo.asMap()[1];
-      bool userExists = await checkIfUserExists(email);
-      if (!userExists && !model.isAdmin) {
-        await auth.signInWithGoogle(googleAuth, model.isAdmin);
-        db.setUser(MyUser(email: email, isAdmin: model.isAdmin),
-            auth.currentUser!.uid);
+      if (googleSignInInfo == null) {
+        throw Exception('Something Went Wrong!');
       } else {
-        if (await canLogin(email, model.isAdmin)) {
+        final googleAuth = googleSignInInfo.elementAt(0);
+        final email = googleSignInInfo.elementAt(1);
+        bool userExists = await checkIfUserExists(email);
+        var user = MyUser(email: email, isAdmin: model.isAdmin);
+        if (!userExists && !model.isAdmin) {
           await auth.signInWithGoogle(googleAuth, model.isAdmin);
+          auth.setMyUser(user);
         } else {
-          await auth.terminateGoogleSignIn();
-          throw FirebaseAuthException(
-              code: 'ERROR_OPERATION_NOT_ALLOWED',
-              message: 'Restricted User Type!');
+          if (await canLogin(email, model.isAdmin)) {
+            await auth.signInWithGoogle(googleAuth, model.isAdmin);
+            auth.setMyUser(user);
+          } else {
+            await auth.terminateGoogleSignIn();
+            throw FirebaseAuthException(
+                code: 'ERROR_OPERATION_NOT_ALLOWED',
+                message: 'Restricted User Type!');
+          }
         }
       }
     } on Exception catch (e) {
-      _showSignInError(context, e);
+      Fluttertoast.showToast(msg: e.toString().split(':').elementAt(1));
     } finally {
       try {
         model.updateWith(isLoading: false);
@@ -254,10 +260,12 @@ class _EmailSignInFormState extends State<EmailSignInForm> {
     try {
       final auth = Provider.of<AuthBase>(context, listen: false);
       await auth.signInWithFacebook();
-      if (!await checkIfUserExists(auth.currentUser!.email!)) {
-        db.setUser(MyUser(email: auth.currentUser!.email!, isAdmin: false),
-            auth.currentUser!.uid);
-      }
+
+      var user = MyUser(
+          email: auth.currentUser!.email!,
+          isAdmin: false);
+
+      auth.setMyUser(user);
     } on Exception catch (e) {
       _showSignInError(context, e);
     } finally {

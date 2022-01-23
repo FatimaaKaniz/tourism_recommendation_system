@@ -271,19 +271,36 @@ class _AddAttractionsPageState extends State<AddAttractionsPage> {
   _getLocationDetails(Attraction attraction) async {
     var result = await googlePlace.details.get(attraction.googlePlaceId!,
         fields:
-            "photo,formatted_address,url,website,international_phone_number,type");
+        "photo,formatted_address,url,website,international_phone_number,type,address_component");
     if (result != null && result.result != null && mounted) {
+      String? city;
+      String? country;
       setState(() {
         address = result.result?.formattedAddress;
-        _nameController=TextEditingController(text: address?.split(',').elementAt(0));
+        _nameController =
+            TextEditingController(text: address?.split(',').elementAt(0));
+        result.result?.addressComponents
+            ?.where((element) =>
+        element.types != null && element.types!.contains('locality'))
+            .forEach((element) {
+          city = element.longName;
+        });
+        result.result?.addressComponents
+            ?.where((element) =>
+        element.types != null && element.types!.contains('country'))
+            .forEach((element) {
+          country = element.longName;
+        });
         attraction.updateWith(
           name: address?.split(',').elementAt(0),
           phone: result.result?.internationalPhoneNumber,
           address: result.result?.formattedAddress,
           url: result.result?.url,
           types: result.result?.types,
+          country: country,
+          city: city,
           photoRef:
-              result.result?.photos?.map((e) => e.photoReference).toList(),
+          result.result?.photos?.map((e) => e.photoReference).toList(),
           website: result.result?.website,
         );
       });
