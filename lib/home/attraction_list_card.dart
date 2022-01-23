@@ -9,10 +9,15 @@ import 'package:tourism_recommendation_system/models/attraction_model.dart';
 import '../services/api_keys.dart';
 
 class AttractionListCard extends StatefulWidget {
-  AttractionListCard({Key? key, required this.attraction, required this.onTap})
+  AttractionListCard(
+      {Key? key,
+      required this.attraction,
+      required this.onTap,
+      this.isCalled = true})
       : super(key: key);
   final Attraction attraction;
   final VoidCallback onTap;
+  bool isCalled;
 
   @override
   State<StatefulWidget> createState() => _AttractionListCardState();
@@ -25,9 +30,10 @@ class _AttractionListCardState extends State<AttractionListCard> {
   void getDetails(List<String?>? photoRefs) async {
     if (widget.attraction.photoRef != null) {
       var img = await getPhoto(widget.attraction.photoRef!.elementAt(0)!);
-      setState(() {
-        image = img;
-      });
+      if (mounted)
+        setState(() {
+          image = img;
+        });
     }
   }
 
@@ -53,6 +59,11 @@ class _AttractionListCardState extends State<AttractionListCard> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.isCalled) {
+      getDetails(widget.attraction.photoRef!);
+      widget.isCalled = false;
+    }
+
     return SizedBox(
       height: 300,
       width: 100,

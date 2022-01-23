@@ -14,6 +14,9 @@ import 'package:tourism_recommendation_system/custom_packages/widgets/dialogs/al
 import 'package:tourism_recommendation_system/models/user_model.dart';
 import 'package:tourism_recommendation_system/services/auth_base.dart';
 
+import '../../models/attraction_model.dart';
+import '../../services/database.dart';
+
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
 
@@ -204,6 +207,61 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ],
             ),
+            // if (user.isAdmin != null && !user.isAdmin!) ...<Widget>[
+            //   SizedBox(height: 15),
+            //   Row(
+            //     children: [
+            //       Padding(
+            //         padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+            //         child: Icon(
+            //           Icons.attractions,
+            //           size: 30,
+            //           color: Colors.grey,
+            //         ),
+            //       ),
+            //       Expanded(
+            //         child: Padding(
+            //           padding: const EdgeInsets.all(8.0),
+            //           child: DropdownButtonFormField<AttractionType>(
+            //             decoration: InputDecoration(
+            //               label: Text(
+            //                 'Favourite Type',
+            //                 style: TextStyle(
+            //                   fontSize: 20,
+            //                   color: Colors.grey,
+            //                 ),
+            //               ),
+            //             ),
+            //             value: user.sortByType!,
+            //             items: AttractionType.values
+            //                 .map((AttractionType attractionType) {
+            //               return DropdownMenuItem(
+            //                   value: attractionType,
+            //                   child: Text(
+            //                     attractionType.name,
+            //                     style: TextStyle(fontSize: 18),
+            //                   ));
+            //             }).toList(),
+            //             onChanged: (type) {
+            //               final db =
+            //                   Provider.of<Database>(context, listen: false);
+            //               user.updateWith(sortByType: type);
+            //               db.setUser(user, auth.currentUser!.uid);
+            //               auth.setMyUser(user);
+            //             },
+            //           ),
+            //         ),
+            //       ),
+            //       Opacity(
+            //         opacity: 0,
+            //         child: Padding(
+            //           padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+            //           child: Icon(Icons.edit),
+            //         ),
+            //       ),
+            //     ],
+            //   ),
+            // ],
             SizedBox(height: 25),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
