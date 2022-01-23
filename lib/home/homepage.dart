@@ -15,7 +15,6 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
       body: _buildContents(context),
     );
   }
@@ -49,7 +48,8 @@ class HomePage extends StatelessWidget {
                 snapshot: snapshot,
                 itemBuilder: (context, attraction) => AttractionListCard(
                   attraction: attraction as Attraction,
-                  onTap: () => _showDetailsPage(googlePlace, context,  attraction),
+                  onTap: () =>
+                      _showDetailsPage(googlePlace, context, attraction),
                 ),
               );
             },
@@ -59,7 +59,8 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  void _showDetailsPage(GooglePlace googlePlace, BuildContext context, Attraction attraction) {
+  void _showDetailsPage(
+      GooglePlace googlePlace, BuildContext context, Attraction attraction) {
     AttractionDetailsPage.show(context, googlePlace, attraction);
   }
 }

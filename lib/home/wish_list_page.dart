@@ -22,10 +22,11 @@ class _WishListPageState extends State<WishListPage> {
   _WishListPageState(this.user);
 
   final MyUser user;
-   Stream<List<Attraction>> attractions = Stream.value([]);
+  Stream<List<Attraction>> attractions = Stream.value([]);
+
 
   @override
-  void initState() {
+  Widget build(BuildContext context) {
     Stream<List<Attraction>> attractions;
 
     WidgetsBinding.instance?.addPostFrameCallback((_) async {
@@ -34,19 +35,7 @@ class _WishListPageState extends State<WishListPage> {
         this.attractions = attractions;
       });
     });
-    super.initState();
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: BackButton(
-        color: Colors.teal,
-        onPressed: () {
-          Navigator.of(context, rootNavigator: true).pop();
-        },
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.startTop,
       body: _buildContents(context),
     );
   }
@@ -90,9 +79,11 @@ class _WishListPageState extends State<WishListPage> {
     );
   }
 
-  void _showDetailsPage(
-      GooglePlace googlePlace, BuildContext context, Attraction attraction) {
-    AttractionDetailsPage.show(context, googlePlace, attraction,isSaved: true);
+  void _showDetailsPage(GooglePlace googlePlace, BuildContext context,
+      Attraction attraction) async {
+    await AttractionDetailsPage.show(
+        context, googlePlace, attraction,
+        isSaved: true);
   }
 
   Future<Stream<List<Attraction>>> getAttractions() async {

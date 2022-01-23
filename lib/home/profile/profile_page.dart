@@ -1,14 +1,18 @@
+import 'dart:io';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tourism_recommendation_system/custom_packages/widgets/avatar.dart';
 import 'package:tourism_recommendation_system/custom_packages/widgets/dialogs/alert_dialogs.dart';
 import 'package:tourism_recommendation_system/models/user_model.dart';
 import 'package:tourism_recommendation_system/services/auth_base.dart';
-import 'package:tourism_recommendation_system/services/database.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -19,7 +23,11 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   bool isBioMetricsAvailable = false;
+  final ImagePicker _picker = ImagePicker();
   final localAuthPrefsKey = 'localAuthEnabled_TourismManagmentSystem_Fatima';
+  String? imageURL;
+  bool imageLoading = false;
+  FirebaseStorage storage = FirebaseStorage.instance;
 
   Future<void> _signOut(BuildContext context) async {
     try {
@@ -259,6 +267,7 @@ class _ProfilePageState extends State<ProfilePage> {
   void _deleteUserAccount(AuthBase auth) async {
     try {
       await auth.deleteUserAccount();
+      await _deleteImage();
       Fluttertoast.showToast(msg: 'Account Deleted Successfully!');
     } on FirebaseAuthException catch (e) {
       if (e.code == 'requires-recent-login')
@@ -266,7 +275,7 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-   _toggleBiometrics(bool val) async {
+  _toggleBiometrics(bool val) async {
     if (!val) {
       await setNewBiometricValueToSP(val);
     } else {
@@ -290,12 +299,166 @@ class _ProfilePageState extends State<ProfilePage> {
             : 'Biometric authentication disabled!');
   }
 
+  _deleteImage() async {
+    if (this.imageURL != null) {
+      final auth = Provider.of<AuthBase>(context, listen: false);
+
+      String uid = auth.currentUser!.uid;
+      var storageRef = storage.ref().child('uploads/$uid.' + 'jpg');
+      await storageRef.delete();
+      setState(() {
+        this.imageURL = null;
+      });
+      Fluttertoast.showToast(msg: 'Image Deleted!');
+    }
+  }
+
+  _updateImage(XFile? image) async {
+    final auth = Provider.of<AuthBase>(context, listen: false);
+    if (image != null) {
+      Navigator.pop(context);
+      setState(() {
+        this.imageLoading = true;
+      });
+      String uid = auth.currentUser!.uid;
+      var storageRef = storage.ref().child('uploads/$uid.' + 'jpg');
+      var uploadTask = await storageRef.putFile(File(image.path));
+
+      String imageUrl = await uploadTask.ref.getDownloadURL();
+
+      setState(() {
+        this.imageURL = imageUrl;
+        this.imageLoading = false;
+      });
+      Fluttertoast.showToast(msg: 'Image Updated!');
+    }
+  }
+
+  _getFromGallery() async {
+    try {
+      _updateImage(await _picker.pickImage(source: ImageSource.gallery));
+    } catch (e) {}
+  }
+
+  _getFromCamera() async {
+    _updateImage(await _picker.pickImage(source: ImageSource.camera));
+  }
+
   Widget _buildUserInfo(User firebaseUser, MyUser user) {
     return Column(
       children: <Widget>[
-        Avatar(
-          photoUrl: firebaseUser.photoURL,
-          radius: 50,
+        InkWell(
+          child: Avatar(
+            isLoading: imageLoading,
+            photoUrl: imageLoading ? null : imageURL ?? firebaseUser.photoURL,
+            radius: 50,
+          ),
+          onTap: () {
+            showModalBottomSheet(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(20),
+                ),
+              ),
+              context: context,
+              elevation: 4.0,
+              builder: (context) {
+                return Container(
+                  height: 170,
+                  child: Center(
+                    child: Column(
+                      children: [
+                        SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(20, 10, 0, 0),
+                              child: Text(
+                                'Profile Photo',
+                                style: TextStyle(
+                                  color: Colors.black87,
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 22,
+                                ),
+                              ),
+                            ),
+                            this.imageURL != null
+                                ? IconButton(
+                                    iconSize: 30,
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                      _deleteImage();
+                                    },
+                                    icon: Icon(Icons.delete,
+                                        color: Colors.red.shade800),
+                                  )
+                                : Container(),
+                          ],
+                        ),
+                        SizedBox(height: 20),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            SizedBox(width: 50),
+                            InkWell(
+                              onTap: _getFromCamera,
+                              child: Column(
+                                children: [
+                                  CircleAvatar(
+                                    backgroundColor: Colors.teal,
+                                    radius: 25,
+                                    child: CircleAvatar(
+                                      backgroundColor: Colors.white,
+                                      radius: 24.5,
+                                      child: Icon(
+                                        Icons.camera_alt_rounded,
+                                        color: Colors.teal,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(height: 10),
+                                  Text(
+                                    'Camera',
+                                    style: TextStyle(color: Colors.black54),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(width: 30),
+                            InkWell(
+                              onTap: _getFromGallery,
+                              child: Column(
+                                children: [
+                                  CircleAvatar(
+                                    backgroundColor: Colors.teal,
+                                    radius: 25,
+                                    child: CircleAvatar(
+                                      backgroundColor: Colors.white,
+                                      radius: 24.5,
+                                      child: Icon(
+                                        Icons.image_rounded,
+                                        color: Colors.teal,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(height: 10),
+                                  Text(
+                                    'Gallery',
+                                    style: TextStyle(color: Colors.black54),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          },
         ),
         SizedBox(height: 8),
         if (user.name != null)
@@ -313,6 +476,9 @@ class _ProfilePageState extends State<ProfilePage> {
   void initState() {
     super.initState();
     final auth = Provider.of<AuthBase>(context, listen: false);
+    setState(() {
+      imageLoading = true;
+    });
 
     WidgetsBinding.instance?.addPostFrameCallback((_) async {
       bool isAvailable = await auth.isBiometricsAvailable();
@@ -324,6 +490,20 @@ class _ProfilePageState extends State<ProfilePage> {
         isBioMetricsAvailable = isAvailable;
         _switchValue = localAuthEnabled;
       });
+      try {
+        String uid = auth.currentUser!.uid;
+        var storageRef =
+            FirebaseStorage.instance.ref().child('uploads/$uid.' + 'jpg');
+        String imageURL = await storageRef.getDownloadURL();
+        setState(() {
+          this.imageURL = imageURL;
+        });
+      } catch (e) {
+      } finally {
+        setState(() {
+          imageLoading = false;
+        });
+      }
     });
   }
 }

@@ -45,7 +45,8 @@ class _MainHomePageState extends State<MainHomePage> {
             email: auth.currentUser!.email,
             isAdmin: admin,
             name: auth.currentUser!.displayName,
-            savedPlacesIds: places));
+            savedPlacesIds: places,
+           ));
         isAdmin = admin;
       });
     } else {
@@ -70,10 +71,10 @@ class _MainHomePageState extends State<MainHomePage> {
       if (!isAdmin) TabItem.saved: (_) => WishListPage(user: auth.myUser!),
       TabItem.profile: (context) => ChangeNotifierProvider<MyUser>(
             create: (_) => MyUser(
-              email: auth.currentUser?.email,
-              isAdmin: isAdmin,
-              name: auth.currentUser?.displayName,
-            ),
+                email: auth.currentUser?.email,
+                isAdmin: isAdmin,
+                name: auth.currentUser?.displayName,
+                ),
             child: ProfilePage(),
           ),
     };

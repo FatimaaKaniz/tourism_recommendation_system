@@ -7,6 +7,7 @@ import 'package:google_place/google_place.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:tourism_recommendation_system/models/user_model.dart';
 import 'package:tourism_recommendation_system/services/auth_base.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/attraction_model.dart';
@@ -18,10 +19,12 @@ class AttractionDetailsPage extends StatefulWidget {
     required this.attraction,
     required this.googlePlace,
     this.isSaved = false,
+    this.user,
   }) : super(key: key);
   final Attraction attraction;
   final GooglePlace googlePlace;
   final bool isSaved;
+  final MyUser? user;
 
   @override
   _AttractionDetailsPageState createState() => _AttractionDetailsPageState(
@@ -30,7 +33,7 @@ class AttractionDetailsPage extends StatefulWidget {
   static Future<void> show(
       BuildContext context, GooglePlace googlePlace, Attraction attraction,
       {bool isSaved = false}) async {
-    await Navigator.of(context, rootNavigator: true).push(
+     await Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute(
         builder: (context) => AttractionDetailsPage(
           attraction: attraction,
@@ -140,6 +143,7 @@ class _AttractionDetailsPageState extends State<AttractionDetailsPage> {
                   setState(() {
                     isSaved = !isSaved;
                   });
+                  Navigator.of(context, rootNavigator: true).pop();
                 } else {
                   if (places == null || places.length == 0) {
                     places = [attraction.id!];
