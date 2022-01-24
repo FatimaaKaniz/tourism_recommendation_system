@@ -5,8 +5,8 @@ import 'package:google_place/google_place.dart';
 import 'package:loading_gifs/loading_gifs.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tourism_recommendation_system/models/attraction_model.dart';
+import 'package:tourism_recommendation_system/services/api_keys.dart';
 
-import '../services/api_keys.dart';
 
 class AttractionListCard extends StatefulWidget {
 

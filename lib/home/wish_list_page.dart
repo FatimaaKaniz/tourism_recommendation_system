@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_place/google_place.dart';
 import 'package:provider/provider.dart';
+import 'package:tourism_recommendation_system/home/common/list_items_builder.dart';
+import 'package:tourism_recommendation_system/home/standard_user/attraction_details_page.dart';
+import 'package:tourism_recommendation_system/home/standard_user/attraction_list_card.dart';
 import 'package:tourism_recommendation_system/models/attraction_model.dart';
 import 'package:tourism_recommendation_system/models/user_model.dart';
+import 'package:tourism_recommendation_system/services/api_keys.dart';
+import 'package:tourism_recommendation_system/services/database.dart';
 
-import '../services/api_keys.dart';
-import '../services/database.dart';
-import 'admin/list_items_builder.dart';
-import 'attraction_details_page.dart';
-import 'attraction_list_card.dart';
 
 class WishListPage extends StatefulWidget {
   const WishListPage({Key? key, required this.user}) : super(key: key);
@@ -24,16 +24,18 @@ class _WishListPageState extends State<WishListPage> {
   final MyUser user;
   Stream<List<Attraction>> attractions = Stream.value([]);
 
-
   @override
   Widget build(BuildContext context) {
-    Stream<List<Attraction>> attractions;
-    WidgetsBinding.instance?.addPostFrameCallback((_) async {
-      attractions = await getAttractions();
-      setState(() {
-        this.attractions = attractions;
+    if (Attraction.isSavedChanged) {
+      Stream<List<Attraction>> attractions;
+      WidgetsBinding.instance?.addPostFrameCallback((_) async {
+        attractions = await getAttractions();
+        setState(() {
+          this.attractions = attractions;
+        });
       });
-    });
+      Attraction.isSavedChanged = false;
+    }
     return Scaffold(
       body: _buildContents(context),
     );
@@ -80,8 +82,7 @@ class _WishListPageState extends State<WishListPage> {
 
   void _showDetailsPage(GooglePlace googlePlace, BuildContext context,
       Attraction attraction) async {
-    await AttractionDetailsPage.show(
-        context, googlePlace, attraction,
+    await AttractionDetailsPage.show(context, googlePlace, attraction,
         isSaved: true);
   }
 

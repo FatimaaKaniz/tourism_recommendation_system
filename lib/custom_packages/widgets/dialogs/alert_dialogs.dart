@@ -7,7 +7,6 @@ import 'package:flutter/services.dart';
 import 'package:google_place/google_place.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
 
-
 Future<bool?> showAlertDialog({
   required BuildContext context,
   required String title,

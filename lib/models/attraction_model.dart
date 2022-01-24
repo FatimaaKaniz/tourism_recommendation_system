@@ -36,6 +36,8 @@ class Attraction with ChangeNotifier implements Comparable<Attraction> {
   String? url;
   List<String?>? types;
 
+  static bool isSavedChanged = false;
+
   String? get nameErrorText => !submitted ||
       (name != null &&
           EmailAndPasswordValidators().nameValidator.isValid(name!))

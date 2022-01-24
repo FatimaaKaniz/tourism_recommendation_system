@@ -10,8 +10,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tourism_recommendation_system/models/user_model.dart';
 import 'package:tourism_recommendation_system/services/auth_base.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../models/attraction_model.dart';
-import '../services/database.dart';
+import '../../models/attraction_model.dart';
+import '../../services/database.dart';
 
 class AttractionDetailsPage extends StatefulWidget {
   const AttractionDetailsPage({
@@ -65,7 +65,6 @@ class _AttractionDetailsPageState extends State<AttractionDetailsPage> {
     if (result != null && result.result != null && mounted) {
       setState(() {
         openNow = result.result!.openingHours?.openNow;
-
       });
     }
     if (attraction.photoRef != null && attraction.photoRef!.length > 0) {
@@ -126,11 +125,11 @@ class _AttractionDetailsPageState extends State<AttractionDetailsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endTop,
       floatingActionButton: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        padding: const EdgeInsets.fromLTRB(0, 0, 8, 40),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
           children: <Widget>[
             FloatingActionButton(
               heroTag: 'save',
@@ -166,7 +165,7 @@ class _AttractionDetailsPageState extends State<AttractionDetailsPage> {
                   size: 30),
             ),
             if (attraction.url != null) ...<Widget>[
-              SizedBox(width: 10),
+              SizedBox(height: 10),
               FloatingActionButton(
                 heroTag: 'maps',
                 onPressed: () => launchURL(attraction.url!, 'maps'),
@@ -215,29 +214,31 @@ class _AttractionDetailsPageState extends State<AttractionDetailsPage> {
                       color: Colors.teal, size: 50),
                 ),
               )
-            : Container(
-                height: 200,
-                child: ListView.builder(
-                  itemCount: photos.length,
-                  scrollDirection: Axis.horizontal,
-                  itemBuilder: (context, index) {
-                    return Container(
-                      width: 250,
-                      child: Card(
-                        elevation: 4,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10.0),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(10.0),
-                          child: Image.memory(
-                            photos[index],
-                            fit: BoxFit.fill,
+            : Center(
+                child: Container(
+                  height: 200,
+                  child: ListView.builder(
+                    itemCount: photos.length,
+                    scrollDirection: Axis.horizontal,
+                    itemBuilder: (context, index) {
+                      return Container(
+                        width: 250,
+                        child: Card(
+                          elevation: 4,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10.0),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(10.0),
+                            child: Image.memory(
+                              photos[index],
+                              fit: BoxFit.fill,
+                            ),
                           ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
               ),
         SizedBox(height: 10),
@@ -522,6 +523,7 @@ class _AttractionDetailsPageState extends State<AttractionDetailsPage> {
       AuthBase auth, List<String?> places, Database db, String msg) {
     auth.myUser!.updateWith(savedPlacesIds: places);
     db.setUser(auth.myUser!, auth.currentUser!.uid);
+    Attraction.isSavedChanged = true;
     Fluttertoast.showToast(msg: msg);
   }
 }

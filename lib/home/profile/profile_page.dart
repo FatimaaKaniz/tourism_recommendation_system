@@ -5,7 +5,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -13,9 +12,7 @@ import 'package:tourism_recommendation_system/custom_packages/widgets/avatar.dar
 import 'package:tourism_recommendation_system/custom_packages/widgets/dialogs/alert_dialogs.dart';
 import 'package:tourism_recommendation_system/models/user_model.dart';
 import 'package:tourism_recommendation_system/services/auth_base.dart';
-
-import '../../models/attraction_model.dart';
-import '../../services/database.dart';
+import 'package:tourism_recommendation_system/services/database.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -30,7 +27,6 @@ class _ProfilePageState extends State<ProfilePage> {
   final localAuthPrefsKey = 'localAuthEnabled_TourismManagmentSystem_Fatima';
   String? imageURL;
   bool imageLoading = false;
-  FirebaseStorage storage = FirebaseStorage.instance;
 
   Future<void> _signOut(BuildContext context) async {
     try {
@@ -109,7 +105,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                       if (!user.isNameEditAble) ...<Widget>[
                         SizedBox(
-                          width: 250,
+                          width: MediaQuery.of(context).size.width * 0.56,
                           child: Text(
                             user.name ?? "",
                             style: TextStyle(
@@ -120,7 +116,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       ] else ...<Widget>[
                         SizedBox(
                           height: 50,
-                          width: 230,
+                          width: MediaQuery.of(context).size.width * 0.56,
                           child: TextFormField(
                             initialValue: user.name ?? "",
                             style: TextStyle(fontSize: 20),
@@ -360,10 +356,10 @@ class _ProfilePageState extends State<ProfilePage> {
   _deleteImage() async {
     if (this.imageURL != null) {
       final auth = Provider.of<AuthBase>(context, listen: false);
+      final db = Provider.of<Database>(context, listen: false);
 
       String uid = auth.currentUser!.uid;
-      var storageRef = storage.ref().child('uploads/$uid.' + 'jpg');
-      await storageRef.delete();
+      await db.deleteImage('uploads/$uid.jpg');
       setState(() {
         this.imageURL = null;
       });
@@ -373,16 +369,15 @@ class _ProfilePageState extends State<ProfilePage> {
 
   _updateImage(XFile? image) async {
     final auth = Provider.of<AuthBase>(context, listen: false);
+    final db = Provider.of<Database>(context, listen: false);
     if (image != null) {
       Navigator.pop(context);
       setState(() {
         this.imageLoading = true;
       });
       String uid = auth.currentUser!.uid;
-      var storageRef = storage.ref().child('uploads/$uid.' + 'jpg');
-      var uploadTask = await storageRef.putFile(File(image.path));
-
-      String imageUrl = await uploadTask.ref.getDownloadURL();
+      String imageUrl =
+          await db.uploadImage(File(image.path), 'uploads/$uid.' + 'jpg');
 
       setState(() {
         this.imageURL = imageUrl;
@@ -534,6 +529,7 @@ class _ProfilePageState extends State<ProfilePage> {
   void initState() {
     super.initState();
     final auth = Provider.of<AuthBase>(context, listen: false);
+    final db = Provider.of<Database>(context, listen: false);
     setState(() {
       imageLoading = true;
     });
@@ -550,9 +546,7 @@ class _ProfilePageState extends State<ProfilePage> {
       });
       try {
         String uid = auth.currentUser!.uid;
-        var storageRef =
-            FirebaseStorage.instance.ref().child('uploads/$uid.' + 'jpg');
-        String imageURL = await storageRef.getDownloadURL();
+        String imageURL = await db.downloadImage('uploads/$uid.jpg');
         setState(() {
           this.imageURL = imageURL;
         });

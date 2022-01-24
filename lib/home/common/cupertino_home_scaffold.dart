@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:tourism_recommendation_system/home/tab_items.dart';
+import 'package:tourism_recommendation_system/home/common/tab_items.dart';
 
 class CupertinoHomeScaffold extends StatelessWidget {
   const CupertinoHomeScaffold({

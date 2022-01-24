@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:tourism_recommendation_system/home/admin/admin_home.dart';
-import 'package:tourism_recommendation_system/home/cupertino_home_scaffold.dart';
+import 'package:tourism_recommendation_system/home/common/cupertino_home_scaffold.dart';
+import 'package:tourism_recommendation_system/home/common/tab_items.dart';
 import 'package:tourism_recommendation_system/home/homepage.dart';
 import 'package:tourism_recommendation_system/home/profile/profile_page.dart';
-import 'package:tourism_recommendation_system/home/tab_items.dart';
 import 'package:tourism_recommendation_system/home/wish_list_page.dart';
 import 'package:tourism_recommendation_system/models/user_model.dart';
 import 'package:tourism_recommendation_system/services/auth_base.dart';
+import 'package:tourism_recommendation_system/services/database.dart';
 
-import '../services/database.dart';
 
 class MainHomePage extends StatefulWidget {
   const MainHomePage({Key? key}) : super(key: key);
@@ -35,10 +35,10 @@ class _MainHomePageState extends State<MainHomePage> {
     final auth = Provider.of<AuthBase>(context, listen: false);
     if (auth.isCurrentUserAdmin == null) {
       final users = await db.usersStream().first;
-      var myuser =
+      var myUser =
           users.where((user) => user.email == auth.currentUser!.email!).first;
-      bool admin = myuser.isAdmin!;
-      var places = myuser.savedPlacesIds;
+      bool admin = myUser.isAdmin!;
+      var places = myUser.savedPlacesIds;
       setState(() {
         auth.setCurrentUserAdmin(admin);
         auth.setMyUser(MyUser(

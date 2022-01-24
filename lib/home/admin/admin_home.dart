@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:tourism_recommendation_system/custom_packages/widgets/dialogs/alert_dialogs.dart';
 import 'package:tourism_recommendation_system/home/admin/add_attraction_page.dart';
 import 'package:tourism_recommendation_system/home/admin/attraction_list_tile.dart';
-import 'package:tourism_recommendation_system/home/admin/list_items_builder.dart';
+import 'package:tourism_recommendation_system/home/common/list_items_builder.dart';
 import 'package:tourism_recommendation_system/home/profile/profile_page.dart';
 import 'package:tourism_recommendation_system/models/attraction_model.dart';
 import 'package:tourism_recommendation_system/models/user_model.dart';

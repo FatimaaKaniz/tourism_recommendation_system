@@ -219,7 +219,7 @@ class _AddAttractionsPageState extends State<AddAttractionsPage> {
                                             height: 5,
                                           ),
                                           SizedBox(
-                                            width: 293,
+                                            width: MediaQuery.of(context).size.width*0.75,
                                             child: Text(
                                               address!,
                                               style: TextStyle(

@@ -3,9 +3,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_place/google_place.dart';
 import 'package:provider/provider.dart';
-import 'package:tourism_recommendation_system/home/admin/list_items_builder.dart';
-import 'package:tourism_recommendation_system/home/attraction_details_page.dart';
-import 'package:tourism_recommendation_system/home/attraction_list_card.dart';
+import 'package:tourism_recommendation_system/home/common/list_items_builder.dart';
+import 'package:tourism_recommendation_system/home/standard_user/attraction_details_page.dart';
+import 'package:tourism_recommendation_system/home/standard_user/attraction_list_card.dart';
 import 'package:tourism_recommendation_system/models/attraction_model.dart';
 import 'package:tourism_recommendation_system/services/database.dart';
 
@@ -20,13 +20,14 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   TextEditingController _searchTextBarController = TextEditingController();
-  List<Attraction> attractions = [];
-  var _streamController = StreamController<List<Attraction>>();
+  //List<Attraction> attractions = [];
+  Stream<List<Attraction>> attractionsStream = Stream.value([]);
+  //var _streamController = StreamController<List<Attraction>>();
 
   SortAttractionBy _sortAttractionBy = SortAttractionBy.name;
   bool ascendingSorting = true;
 
-  Stream<List<Attraction>> get _stream => _streamController.stream;
+  //Stream<List<Attraction>> get _stream => _streamController.stream;
 
   @override
   Widget build(BuildContext context) {
@@ -48,17 +49,20 @@ class _HomePageState extends State<HomePage> {
       // // print(firstList);
       // // print(secondList);
       // firstList..addAll(secondList);
-      setState(() {
-        this.attractions = attractions.toList();
-      });
-      _streamController.sink.add(this.attractions);
+      if (mounted)
+        setState(() {
+          //this.attractions = attractions.toList();
+          attractionsStream = database.attractionStream();
+        });
+
+      //_streamController.sink.addStream(database.attractionStream());
     });
   }
 
   Widget _buildContents(BuildContext context) {
     final googlePlace = GooglePlace(APIKeys.googleMapsAPIKeys);
     return StreamBuilder<List<Attraction>>(
-      stream: _stream,
+      stream: attractionsStream,
       builder: (context, snapshot) {
         return NestedScrollView(
           headerSliverBuilder: (BuildContext context, bool innerBoxScrolled) {
@@ -104,6 +108,10 @@ class _HomePageState extends State<HomePage> {
 
   _filterStream(String value) async {
     value = value.trim();
+
+    final db = Provider.of<Database>(context, listen: false);
+
+    var attractions = await db.attractionStream().first;
     var filteredPlaces = attractions
         .where((element) =>
             element.name!.toLowerCase().contains(value.toLowerCase()) ||
@@ -121,12 +129,16 @@ class _HomePageState extends State<HomePage> {
             (element.city != null &&
                 element.city!.toLowerCase().contains(value.toLowerCase())))
         .toList();
-    print(filteredPlaces);
-    _streamController.sink.add(filteredPlaces);
+    setState(() {
+      attractionsStream = Stream.value(filteredPlaces);
+    });
+    //_streamController.sink.add(filteredPlaces);
   }
 
-  _sortData() {
-    this.attractions.sort((a, b) {
+  _sortData() async {
+    final db = Provider.of<Database>(context, listen: false);
+    var attractions = await db.attractionStream().first;
+    attractions.sort((a, b) {
       int value = 0;
       switch (_sortAttractionBy) {
         case SortAttractionBy.name:
@@ -150,8 +162,10 @@ class _HomePageState extends State<HomePage> {
       return ascendingSorting ? value : -1 * value;
     });
     Navigator.pop(context);
-    _streamController.sink.add(this.attractions);
-    _filterStream(_searchTextBarController.text);
+    //_streamController.sink.add(this.attractions);
+    setState(() {
+      attractionsStream = Stream.value(attractions);
+    });
   }
 
   SliverAppBar createSilverAppBar2() {
@@ -251,63 +265,69 @@ class _HomePageState extends State<HomePage> {
                               Padding(
                                 padding:
                                     const EdgeInsets.fromLTRB(10, 0, 30, 0),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      children: [
-                                        Radio(
-                                          value: SortAttractionBy.name,
-                                          groupValue: _sortAttractionBy,
-                                          onChanged: (SortAttractionBy? value) {
-                                            setState(() {
-                                              _sortAttractionBy = value!;
-                                            });
-                                            _sortData();
-                                          },
-                                        ),
-                                        Text('Name')
-                                      ],
-                                    ),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      children: [
-                                        Radio(
-                                          value:
-                                              SortAttractionBy.attractionType,
-                                          groupValue: _sortAttractionBy,
-                                          onChanged: (SortAttractionBy? value) {
-                                            setState(() {
-                                              _sortAttractionBy = value!;
-                                            });
-                                            _sortData();
-                                          },
-                                        ),
-                                        Text('Attraction Type')
-                                      ],
-                                    ),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      children: [
-                                        Radio(
-                                          value: SortAttractionBy.country,
-                                          groupValue: _sortAttractionBy,
-                                          onChanged: (SortAttractionBy? value) {
-                                            setState(() {
-                                              _sortAttractionBy = value!;
-                                            });
-                                            _sortData();
-                                          },
-                                        ),
-                                        Text('Country')
-                                      ],
-                                    ),
-                                  ],
+                                child: SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        children: [
+                                          Radio(
+                                            value: SortAttractionBy.name,
+                                            groupValue: _sortAttractionBy,
+                                            onChanged:
+                                                (SortAttractionBy? value) {
+                                              setState(() {
+                                                _sortAttractionBy = value!;
+                                              });
+                                              _sortData();
+                                            },
+                                          ),
+                                          Text('Name')
+                                        ],
+                                      ),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        children: [
+                                          Radio(
+                                            value:
+                                                SortAttractionBy.attractionType,
+                                            groupValue: _sortAttractionBy,
+                                            onChanged:
+                                                (SortAttractionBy? value) {
+                                              setState(() {
+                                                _sortAttractionBy = value!;
+                                              });
+                                              _sortData();
+                                            },
+                                          ),
+                                          Text('Attraction Type')
+                                        ],
+                                      ),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        children: [
+                                          Radio(
+                                            value: SortAttractionBy.country,
+                                            groupValue: _sortAttractionBy,
+                                            onChanged:
+                                                (SortAttractionBy? value) {
+                                              setState(() {
+                                                _sortAttractionBy = value!;
+                                              });
+                                              _sortData();
+                                            },
+                                          ),
+                                          Text('Country')
+                                        ],
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                               // Padding(

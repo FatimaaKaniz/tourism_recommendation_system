@@ -20,7 +20,8 @@ class EmptyContent extends StatelessWidget {
             title,
             style: TextStyle(fontSize: 32, color: Colors.black54),
           ),
-          if (auth.isCurrentUserAdmin!) ...<Widget>[
+          if (auth.isCurrentUserAdmin != null &&
+              auth.isCurrentUserAdmin!) ...<Widget>[
             Text(
               message,
               style: TextStyle(fontSize: 16, color: Colors.black54),

@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:tourism_recommendation_system/models/attraction_model.dart';
 import 'package:tourism_recommendation_system/models/user_model.dart';
 import 'package:tourism_recommendation_system/services/api_path.dart';
@@ -20,12 +23,20 @@ abstract class Database {
   Stream<List<Attraction>> attractionStream();
 
   String documentIdFromCurrentDate();
+
+  Future<String> uploadImage(File image, String path);
+
+  Future<String> downloadImage(String path);
+
+  Future<void> deleteImage(String path);
 }
 
 class FireStoreDatabase implements Database {
   FireStoreDatabase();
 
   final _service = FirestoreService.instance;
+  FirebaseStorage _storage = FirebaseStorage.instance;
+
 
   @override
   Future<void> deleteUser(MyUser user, String uid) => _service.deleteData(
@@ -67,4 +78,24 @@ class FireStoreDatabase implements Database {
       );
 
   String documentIdFromCurrentDate() => DateTime.now().toIso8601String();
+
+  @override
+  Future<void> deleteImage(String path) async {
+    var storageRef = _storage.ref().child(path);
+    await storageRef.delete();
+  }
+
+  @override
+  Future<String> downloadImage(String path) async{
+    var storageRef = _storage.ref().child(path);
+    return storageRef.getDownloadURL();
+  }
+
+  @override
+  Future<String> uploadImage(File image, String path) async {
+    var storageRef = _storage.ref().child(path);
+    var uploadTask = await storageRef.putFile(image);
+
+    return uploadTask.ref.getDownloadURL();
+  }
 }
