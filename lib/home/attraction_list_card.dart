@@ -9,28 +9,31 @@ import 'package:tourism_recommendation_system/models/attraction_model.dart';
 import '../services/api_keys.dart';
 
 class AttractionListCard extends StatefulWidget {
+
   AttractionListCard(
       {Key? key,
       required this.attraction,
       required this.onTap,
       this.isCalled = true})
       : super(key: key);
+
+   bool isCalled;
   final Attraction attraction;
   final VoidCallback onTap;
-  bool isCalled;
 
   @override
   State<StatefulWidget> createState() => _AttractionListCardState();
 }
 
 class _AttractionListCardState extends State<AttractionListCard> {
+
   final googlePlace = GooglePlace(APIKeys.googleMapsAPIKeys);
   Uint8List? image;
 
   void getDetails(List<String?>? photoRefs) async {
     if (widget.attraction.photoRef != null) {
       var img = await getPhoto(widget.attraction.photoRef!.elementAt(0)!);
-      if (mounted)
+      if(mounted)
         setState(() {
           image = img;
         });

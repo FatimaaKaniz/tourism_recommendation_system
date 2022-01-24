@@ -28,7 +28,6 @@ class _WishListPageState extends State<WishListPage> {
   @override
   Widget build(BuildContext context) {
     Stream<List<Attraction>> attractions;
-
     WidgetsBinding.instance?.addPostFrameCallback((_) async {
       attractions = await getAttractions();
       setState(() {

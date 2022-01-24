@@ -60,28 +60,21 @@ class _EmailSignInFormState extends State<EmailSignInForm> {
           if (await canLogin(model.email, model.isAdmin)) {
             success = await model.submit(context);
           } else {
-            await showExceptionAlertDialog(
-              context: context,
-              title: 'Operation Not Allowed',
-              exception: new FirebaseAuthException(
-                  code: 'ERROR_OPERATION_NOT_ALLOWED',
-                  message: 'Restricted User Type!'),
-            );
+            Fluttertoast.showToast(msg: 'Restricted User Type!');
           }
         } else {
-          success = await model.submit(context, ifExists: true);
+          if (model.isAdmin) {
+            Fluttertoast.showToast(msg: 'Restricted User Type!');
+          } else {
+            success = await model.submit(context, ifExists: true);
+          }
         }
       } else {
         success = await model.submit(context);
       }
       if (success) {
         if (model.formType == EmailSignInFormType.forgotPassword) {
-          await showAlertDialog(
-            context: context,
-            title: "Reset Link Sent",
-            content: "Reset link has been sent your email address!",
-            defaultActionText: "OK",
-          );
+          Fluttertoast.showToast(msg: 'Reset password link has been sent!');
           _updateFormType(EmailSignInFormType.signIn);
         }
       }
@@ -241,14 +234,12 @@ class _EmailSignInFormState extends State<EmailSignInForm> {
             auth.setMyUser(user);
           } else {
             await auth.terminateGoogleSignIn();
-            throw FirebaseAuthException(
-                code: 'ERROR_OPERATION_NOT_ALLOWED',
-                message: 'Restricted User Type!');
+            Fluttertoast.showToast(msg: 'Restricted User Type!');
           }
         }
       }
     } on Exception catch (e) {
-      Fluttertoast.showToast(msg: e.toString().split(':').elementAt(1));
+      Fluttertoast.showToast(msg: e.toString().split(':').last);
     } finally {
       try {
         model.updateWith(isLoading: false);
@@ -261,9 +252,7 @@ class _EmailSignInFormState extends State<EmailSignInForm> {
       final auth = Provider.of<AuthBase>(context, listen: false);
       await auth.signInWithFacebook();
 
-      var user = MyUser(
-          email: auth.currentUser!.email!,
-          isAdmin: false);
+      var user = MyUser(email: auth.currentUser!.email!, isAdmin: false);
 
       auth.setMyUser(user);
     } on Exception catch (e) {

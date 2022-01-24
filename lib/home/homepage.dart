@@ -67,9 +67,9 @@ class _HomePageState extends State<HomePage> {
           body: ListItemsBuilder(
               snapshot: snapshot,
               itemBuilder: (context, attraction) {
-                //print(attraction);
                 return AttractionListCard(
                   attraction: attraction as Attraction,
+                  isCalled: true,
                   onTap: () =>
                       _showDetailsPage(googlePlace, context, attraction),
                 );
@@ -121,7 +121,7 @@ class _HomePageState extends State<HomePage> {
             (element.city != null &&
                 element.city!.toLowerCase().contains(value.toLowerCase())))
         .toList();
-
+    print(filteredPlaces);
     _streamController.sink.add(filteredPlaces);
   }
 
@@ -151,6 +151,7 @@ class _HomePageState extends State<HomePage> {
     });
     Navigator.pop(context);
     _streamController.sink.add(this.attractions);
+    _filterStream(_searchTextBarController.text);
   }
 
   SliverAppBar createSilverAppBar2() {
