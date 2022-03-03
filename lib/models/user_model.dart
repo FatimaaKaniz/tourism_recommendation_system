@@ -4,7 +4,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:tourism_recommendation_system/custom_packages/tools/validators.dart';
 
 class MyUser with ChangeNotifier {
-  MyUser({required this.email,
+  MyUser({
+    required this.email,
     required this.isAdmin,
     this.name,
     this.savedPlacesIds,
@@ -15,6 +16,7 @@ class MyUser with ChangeNotifier {
   bool? isAdmin;
   String? name;
   List<String?>? savedPlacesIds;
+
   // AttractionType? sortByType;
 
   bool isNameEditAble = false;
@@ -27,7 +29,7 @@ class MyUser with ChangeNotifier {
   factory MyUser.fromMap(Map<String, dynamic> data, String documentId) {
     final bool isAdmin = data['isAdmin'];
     final String email = data['email'];
-    final String? type = data['sortByType'];
+    // final String? type = data['sortByType'];
     // AttractionType? sortByType;
     // try {
     //   sortByType= AttractionType.values.firstWhere((element) => element.name == type);
@@ -41,7 +43,6 @@ class MyUser with ChangeNotifier {
       email: email,
       isAdmin: isAdmin,
       savedPlacesIds: savedPlacesIds,
-
     );
   }
 
@@ -51,7 +52,6 @@ class MyUser with ChangeNotifier {
       'email': email,
       'savedPlacesIds': savedPlacesIds,
       // 'sortByType': this.sortByType!.name,
-
     };
   }
 
@@ -77,10 +77,10 @@ class MyUser with ChangeNotifier {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-          other is MyUser &&
-              runtimeType == other.runtimeType &&
-              email == other.email &&
-              isAdmin == other.isAdmin;
+      other is MyUser &&
+          runtimeType == other.runtimeType &&
+          email == other.email &&
+          isAdmin == other.isAdmin;
 
   @override
   int get hashCode => email.hashCode ^ isAdmin.hashCode;

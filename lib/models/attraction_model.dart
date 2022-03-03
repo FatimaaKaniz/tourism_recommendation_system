@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:tourism_recommendation_system/custom_packages/tools/validators.dart';
+import 'package:collection/collection.dart';
 
 enum AttractionType { historical, mountains, beaches, urban }
 enum SortAttractionBy { name, attractionType, country }
@@ -87,6 +88,10 @@ class Attraction with ChangeNotifier implements Comparable<Attraction> {
     this.googlePlaceId = googlePlaceId ?? this.googlePlaceId;
     this.id = id ?? this.id;
     notifyListeners();
+  }
+
+  static AttractionType? getAttractionType(String type){
+    return AttractionType.values.firstWhereOrNull((element) => element.name == type);
   }
 
   factory Attraction.fromMap(Map<String, dynamic> data, String documentId) {

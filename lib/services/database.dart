@@ -22,6 +22,11 @@ abstract class Database {
 
   Stream<List<Attraction>> attractionStream();
 
+  Stream<List<Attraction>> attractionStreamSortedBy(SortAttractionBy sortType,
+      {bool isAscending = true});
+
+  Stream<List<Attraction>> attractionStreamFilterByType({AttractionType? type});
+
   String documentIdFromCurrentDate();
 
   Future<String> uploadImage(File image, String path);
@@ -36,7 +41,6 @@ class FireStoreDatabase implements Database {
 
   final _service = FirestoreService.instance;
   FirebaseStorage _storage = FirebaseStorage.instance;
-
 
   @override
   Future<void> deleteUser(MyUser user, String uid) => _service.deleteData(
@@ -77,6 +81,44 @@ class FireStoreDatabase implements Database {
         builder: (data, documentId) => Attraction.fromMap(data, documentId),
       );
 
+  @override
+  Stream<List<Attraction>> attractionStreamFilterByType(
+          {AttractionType? type}) =>
+      _service.collectionStream(
+        path: APIPath.attractions(),
+        builder: (data, documentId) => Attraction.fromMap(data, documentId),
+        queryBuilder: type != null
+            ? (query) => query.where('attractionType', isEqualTo: type.name)
+            : null,
+      );
+
+  @override
+  Stream<List<Attraction>> attractionStreamSortedBy(SortAttractionBy sortType,
+          {bool isAscending = true}) =>
+      _service.collectionStream(
+          path: APIPath.attractions(),
+          builder: (data, documentId) => Attraction.fromMap(data, documentId),
+          sort: (lhs, rhs) {
+            switch (sortType) {
+              case SortAttractionBy.country:
+                {
+                  return lhs.country!.compareTo(rhs.country!) *
+                      (isAscending ? 1 : -1);
+                }
+              case SortAttractionBy.name:
+                {
+                  return lhs.name!.compareTo(rhs.name!) *
+                      (isAscending ? 1 : -1);
+                }
+              case SortAttractionBy.attractionType:
+                {
+                  return lhs.attractionType!.name
+                          .compareTo(rhs.attractionType!.name) *
+                      (isAscending ? 1 : -1);
+                }
+            }
+          });
+
   String documentIdFromCurrentDate() => DateTime.now().toIso8601String();
 
   @override
@@ -86,7 +128,7 @@ class FireStoreDatabase implements Database {
   }
 
   @override
-  Future<String> downloadImage(String path) async{
+  Future<String> downloadImage(String path) async {
     var storageRef = _storage.ref().child(path);
     return storageRef.getDownloadURL();
   }
