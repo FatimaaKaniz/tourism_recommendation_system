@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -6,24 +5,24 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:social_login_buttons/social_login_buttons.dart';
 import 'package:tourism_recommendation_system/custom_packages/widgets/dialogs/alert_dialogs.dart';
-import 'package:tourism_recommendation_system/models/email_sign_in_model.dart';
+import 'package:tourism_recommendation_system/models/sign_in_model.dart';
 import 'package:tourism_recommendation_system/models/user_model.dart';
 import 'package:tourism_recommendation_system/services/auth_base.dart';
 import 'package:tourism_recommendation_system/services/database.dart';
 
-class EmailSignInForm extends StatefulWidget {
-  EmailSignInForm({required this.model, required this.db});
+class SignInForm extends StatefulWidget {
+  SignInForm({required this.model, required this.db});
 
-  final EmailSignInModel model;
+  final SignInModel model;
   final Database db;
 
   static Widget create(BuildContext context) {
     final auth = Provider.of<AuthBase>(context, listen: false);
     final db = Provider.of<Database>(context, listen: false);
-    return ChangeNotifierProvider<EmailSignInModel>(
-      create: (_) => EmailSignInModel(auth: auth),
-      child: Consumer<EmailSignInModel>(
-          builder: (_, model, __) => EmailSignInForm(
+    return ChangeNotifierProvider<SignInModel>(
+      create: (_) => SignInModel(auth: auth),
+      child: Consumer<SignInModel>(
+          builder: (_, model, __) => SignInForm(
               model: model,
               db: db) //every time called when notify listener called
           ),
@@ -31,16 +30,16 @@ class EmailSignInForm extends StatefulWidget {
   }
 
   @override
-  _EmailSignInFormState createState() => _EmailSignInFormState();
+  _SignInFormState createState() => _SignInFormState();
 }
 
-class _EmailSignInFormState extends State<EmailSignInForm> {
+class _SignInFormState extends State<SignInForm> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final FocusScopeNode _node = FocusScopeNode();
 
-  EmailSignInModel get model => widget.model;
+  SignInModel get model => widget.model;
 
   Database get db => widget.db;
 
@@ -55,7 +54,7 @@ class _EmailSignInFormState extends State<EmailSignInForm> {
   Future<void> _submit() async {
     try {
       bool success = false;
-      if (model.formType == EmailSignInFormType.signIn) {
+      if (model.formType == SignInFormType.signIn) {
         if (await checkIfUserExists(model.email)) {
           if (await canLogin(model.email, model.isAdmin)) {
             success = await model.submit(context);
@@ -73,9 +72,9 @@ class _EmailSignInFormState extends State<EmailSignInForm> {
         success = await model.submit(context);
       }
       if (success) {
-        if (model.formType == EmailSignInFormType.forgotPassword) {
+        if (model.formType == SignInFormType.forgotPassword) {
           Fluttertoast.showToast(msg: 'Reset password link has been sent!');
-          _updateFormType(EmailSignInFormType.signIn);
+          _updateFormType(SignInFormType.signIn);
         }
       }
     } on Exception catch (e) {
@@ -86,7 +85,7 @@ class _EmailSignInFormState extends State<EmailSignInForm> {
     }
   }
 
-  void _updateFormType(EmailSignInFormType formType) {
+  void _updateFormType(SignInFormType formType) {
     model.updateFormType(formType);
     _emailController.clear();
     _passwordController.clear();
@@ -119,11 +118,11 @@ class _EmailSignInFormState extends State<EmailSignInForm> {
 
   List<Widget> _buildChildren() {
     return [
-      if (model.formType == EmailSignInFormType.register) ...<Widget>[
+      if (model.formType == SignInFormType.register) ...<Widget>[
         _buildNameTextField(),
       ],
       _buildEmailTextField(),
-      if (model.formType != EmailSignInFormType.forgotPassword) ...<Widget>[
+      if (model.formType != SignInFormType.forgotPassword) ...<Widget>[
         SizedBox(height: 8.0),
         _buildPasswordTextField(),
       ],
@@ -148,12 +147,12 @@ class _EmailSignInFormState extends State<EmailSignInForm> {
               : () => _updateFormType(model.secondaryActionFormType!),
         )
       ],
-      if (model.formType == EmailSignInFormType.signIn)
+      if (model.formType == SignInFormType.signIn)
         TextButton(
           child: Text('Forgot password?', style: TextStyle(fontSize: 15)),
           onPressed: model.isLoading
               ? null
-              : () => _updateFormType(EmailSignInFormType.forgotPassword),
+              : () => _updateFormType(SignInFormType.forgotPassword),
         ),
       SizedBox(height: 8.0),
       Text(
@@ -348,115 +347,138 @@ class _EmailSignInFormState extends State<EmailSignInForm> {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(0, 40, 0, 30),
-            child: Text(
-              model.formType == EmailSignInFormType.register
-                  ? 'Account Type'
-                  : 'Choose Account Type',
-              style: TextStyle(
-                fontSize: 18,
-                color: Colors.teal,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    return Scaffold(
+      resizeToAvoidBottomInset: true,
+      backgroundColor: Colors.white,
+      body: SingleChildScrollView(
+        child: Container(
+          child: Column(
             children: [
-              if (model.formType != EmailSignInFormType.register) ...<Widget>[
-                InkWell(
-                  onTap: () => model.updateWith(isAdmin: true),
-                  child: SizedBox(
-                    height: 150,
-                    width: 150,
-                    child: Card(
-                      borderOnForeground: true,
-                      elevation: 2.0,
-                      shape: RoundedRectangleBorder(
-                        side: BorderSide(
-                            color: model.isAdmin
-                                ? Colors.teal
-                                : Colors.grey.shade200,
-                            width: 2),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          Image(
-                            image: AssetImage('resources/images/admin.png'),
-                          ),
-                          Text(
-                            'Admin User',
-                            style: TextStyle(fontSize: 15),
-                          ),
-                        ],
-                      ),
-                      color: Colors.white,
-                    ),
-                  ),
-                )
-              ],
-              InkWell(
-                onTap: () => model.updateWith(isAdmin: false),
-                child: SizedBox(
-                  height: 150,
-                  width: 150,
-                  child: Card(
-                    borderOnForeground: true,
-                    elevation: 2.0,
-                    shape: RoundedRectangleBorder(
-                      side: BorderSide(
-                          color: !model.isAdmin
-                              ? Colors.teal
-                              : Colors.grey.shade200,
-                          width: 2),
-                    ),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Container(
+                  child: Center(
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        Image(
-                          image: AssetImage('resources/images/user.png'),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(0, 40, 0, 30),
+                          child: Text(
+                            model.formType == SignInFormType.register
+                                ? 'Account Type'
+                                : 'Choose Account Type',
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.teal,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
-                        Text(
-                          'Standard User',
-                          style: TextStyle(fontSize: 15),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            if (model.formType !=
+                                SignInFormType.register) ...<Widget>[
+                              InkWell(
+                                onTap: () => model.updateWith(isAdmin: true),
+                                child: SizedBox(
+                                  height: 150,
+                                  width: 150,
+                                  child: Card(
+                                    borderOnForeground: true,
+                                    elevation: 2.0,
+                                    shape: RoundedRectangleBorder(
+                                      side: BorderSide(
+                                          color: model.isAdmin
+                                              ? Colors.teal
+                                              : Colors.grey.shade200,
+                                          width: 2),
+                                    ),
+                                    child: Column(
+                                      mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                      children: [
+                                        Image(
+                                          image: AssetImage(
+                                              'resources/images/admin.png'),
+                                        ),
+                                        Text(
+                                          'Admin User',
+                                          style: TextStyle(fontSize: 15),
+                                        ),
+                                      ],
+                                    ),
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              )
+                            ],
+                            InkWell(
+                              onTap: () => model.updateWith(isAdmin: false),
+                              child: SizedBox(
+                                height: 150,
+                                width: 150,
+                                child: Card(
+                                  borderOnForeground: true,
+                                  elevation: 2.0,
+                                  shape: RoundedRectangleBorder(
+                                    side: BorderSide(
+                                        color: !model.isAdmin
+                                            ? Colors.teal
+                                            : Colors.grey.shade200,
+                                        width: 2),
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      Image(
+                                        image: AssetImage(
+                                            'resources/images/user.png'),
+                                      ),
+                                      Text(
+                                        'Standard User',
+                                        style: TextStyle(fontSize: 15),
+                                      ),
+                                    ],
+                                  ),
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        _buildHeader(),
+                        Card(
+                          elevation: 2.0,
+                          shape: RoundedRectangleBorder(
+                            side: BorderSide(
+                                color: Colors.grey.shade200, width: 1),
+                          ),
+                          color: Colors.white,
+                          borderOnForeground: true,
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: AutofillGroup(
+                              onDisposeAction: model.formType ==
+                                  SignInFormType.forgotPassword
+                                  ? AutofillContextAction.commit
+                                  : AutofillContextAction.commit,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: _buildChildren(),
+                              ),
+                            ),
+                          ),
                         ),
                       ],
                     ),
-                    color: Colors.white,
                   ),
                 ),
               ),
             ],
           ),
-          _buildHeader(),
-          Card(
-            elevation: 2.0,
-            shape: RoundedRectangleBorder(
-              side: BorderSide(color: Colors.grey.shade200, width: 1),
-            ),
-            color: Colors.white,
-            borderOnForeground: true,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: AutofillGroup(
-                onDisposeAction:
-                    model.formType == EmailSignInFormType.forgotPassword
-                        ? AutofillContextAction.commit
-                        : AutofillContextAction.commit,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: _buildChildren(),
-                ),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

@@ -20,7 +20,10 @@ abstract class Database {
 
   Future<void> updateAttraction(Attraction attraction);
 
-  Stream<List<Attraction>> attractionStream();
+  Stream<List<Attraction>> attractionStream(
+      {AttractionType? type,
+      SortAttractionBy sortType = SortAttractionBy.name,
+      bool isAscending = true});
 
   Stream<List<Attraction>> attractionStreamSortedBy(SortAttractionBy sortType,
       {bool isAscending = true});
@@ -76,9 +79,44 @@ class FireStoreDatabase implements Database {
       setAttraction(attraction, attraction.id!);
 
   @override
-  Stream<List<Attraction>> attractionStream() => _service.collectionStream(
+  Stream<List<Attraction>> attractionStream(
+          {AttractionType? type,
+          SortAttractionBy sortType = SortAttractionBy.name,
+          bool isAscending = true}) =>
+      _service.collectionStream(
         path: APIPath.attractions(),
         builder: (data, documentId) => Attraction.fromMap(data, documentId),
+        queryBuilder: type != null
+            ? (query) => query.where('attractionType', isEqualTo: type.name)
+            : null,
+        sort: (lhs, rhs) {
+          switch (sortType) {
+            case SortAttractionBy.country:
+              {
+                return lhs.country!
+                        .toLowerCase()
+                        .trim()
+                        .compareTo(rhs.country!.toLowerCase().trim()) *
+                    (isAscending ? 1 : -1);
+              }
+            case SortAttractionBy.name:
+              {
+                return lhs.name!
+                        .toLowerCase()
+                        .trim()
+                        .compareTo(rhs.name!.toLowerCase().trim()) *
+                    (isAscending ? 1 : -1);
+              }
+            case SortAttractionBy.attractionType:
+              {
+                return lhs.attractionType!.name.toLowerCase().trim().compareTo(
+                        rhs.attractionType!.name.toLowerCase().trim()) *
+                    (isAscending ? 1 : -1);
+              }
+            default:
+              return 0;
+          }
+        },
       );
 
   @override

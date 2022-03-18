@@ -7,7 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:social_login_buttons/social_login_buttons.dart';
 import 'package:tourism_recommendation_system/home/common/generic_home_page.dart';
 import 'package:tourism_recommendation_system/services/auth_base.dart';
-import 'package:tourism_recommendation_system/sign_in/email_sign_in_page.dart';
+import 'package:tourism_recommendation_system/sign_in/sign_in_page.dart';
 
 class MainPage extends StatefulWidget {
   MainPage({Key? key}) : super(key: key);
@@ -27,7 +27,7 @@ class _MainPageState extends State<MainPage> {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.active) {
           final user = snapshot.data;
-          return user == null ? EmailSignInPage() : MainHomePage();
+          return user == null ? SignInForm.create(context) : MainHomePage();
         }
         return Scaffold(
           body: Center(

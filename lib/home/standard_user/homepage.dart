@@ -3,14 +3,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_place/google_place.dart';
 import 'package:provider/provider.dart';
-import 'package:tourism_recommendation_system/custom_packages/widgets/dialogs/alert_dialogs.dart';
 import 'package:tourism_recommendation_system/home/common/list_items_builder.dart';
 import 'package:tourism_recommendation_system/home/standard_user/attraction_details_page.dart';
 import 'package:tourism_recommendation_system/home/standard_user/attraction_list_card.dart';
 import 'package:tourism_recommendation_system/models/attraction_model.dart';
+import 'package:tourism_recommendation_system/services/api_keys.dart';
 import 'package:tourism_recommendation_system/services/database.dart';
 
-import '../../services/api_keys.dart';
 
 class HomePage extends StatefulWidget {
   HomePage({Key? key}) : super(key: key);
@@ -27,6 +26,7 @@ class _HomePageState extends State<HomePage> {
   SortAttractionBy _sortAttractionBy = SortAttractionBy.name;
   bool ascendingSorting = true;
   int selectedTypeIndex = 0;
+  var types = AttractionType.values.map((e) => e.name).toList();
 
   @override
   Widget build(BuildContext context) {
@@ -35,9 +35,21 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  getAttractions(BuildContext context) {
+    final database = Provider.of<Database>(context, listen: false);
+    print(_sortAttractionBy);
+    print(ascendingSorting);
+    print(types[selectedTypeIndex]);
+    return database.attractionStream(
+        type: Attraction.getAttractionType(types[selectedTypeIndex]),
+        sortType: _sortAttractionBy,
+        isAscending: ascendingSorting);
+  }
+
   @override
   void initState() {
     super.initState();
+    types.insert(0, 'All');
     final database = Provider.of<Database>(context, listen: false);
 
     WidgetsBinding.instance?.addPostFrameCallback((_) async {
@@ -62,57 +74,16 @@ class _HomePageState extends State<HomePage> {
           headerSliverBuilder: (BuildContext context, bool innerBoxScrolled) {
             return <Widget>[createSilverAppBar1(), createSilverAppBar2()];
           },
-          body: Column(
-            children: [
-              Container(
-                margin: EdgeInsets.only(left: 15, top: 10),
-                height: 50,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: types.length,
-                  itemBuilder: (context, index) {
-                    return Container(
-                      margin: EdgeInsets.only(right: 10),
-                      child: InkWell(
-                        child: Chip(
-                          label: Text(
-                            types[index],
-                            style: TextStyle(
-                              color: Colors.white,
-                            ),
-                          ),
-                          backgroundColor: selectedTypeIndex == index
-                              ? Colors.teal
-                              : Colors.grey,
-                        ),
-                        onTap: () {
-                          setState(() {
-                            selectedTypeIndex = index;
-                            attractionsStream =
-                                database.attractionStreamFilterByType(
-                              type: Attraction.getAttractionType(types[index]),
-                            );
-                          });
-                        },
-                      ),
-                    );
-                  },
-                ),
-              ),
-              Expanded(
-                child: ListItemsBuilder(
-                  snapshot: snapshot,
-                  itemBuilder: (context, attraction) {
-                    return AttractionListCard(
-                      attraction: attraction as Attraction,
-                      isCalled: true,
-                      onTap: () =>
-                          _showDetailsPage(googlePlace, context, attraction),
-                    );
-                  },
-                ),
-              ),
-            ],
+          body: ListItemsBuilder(
+            snapshot: snapshot,
+            itemBuilder: (context, attraction) {
+              return AttractionListCard(
+                attraction: attraction as Attraction,
+                isCalled: true,
+                onTap: () =>
+                    _showDetailsPage(googlePlace, context, attraction),
+              );
+            },
           ),
         );
       },
@@ -173,10 +144,8 @@ class _HomePageState extends State<HomePage> {
 
   _sortData() async {
     Navigator.pop(context);
-    final db = Provider.of<Database>(context, listen: false);
     setState(() {
-      attractionsStream = db.attractionStreamSortedBy(_sortAttractionBy,
-          isAscending: ascendingSorting);
+      attractionsStream = getAttractions(context);
     });
   }
 
@@ -184,6 +153,42 @@ class _HomePageState extends State<HomePage> {
     return SliverAppBar(
       backgroundColor: Colors.teal,
       pinned: true,
+      bottom: PreferredSize(
+        preferredSize: Size.fromHeight(50),
+        child: Container(
+          color: Colors.white,
+          height: 50,
+          child: Padding(
+            padding: const EdgeInsets.only(left: 10),
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: types.length,
+              itemBuilder: (context, index) {
+                return Container(
+                  margin: EdgeInsets.only(right: 10),
+                  child: InkWell(
+                      child: Chip(
+                        label: Text(
+                          types[index],
+                          style: TextStyle(
+                            color: Colors.white,
+                          ),
+                        ),
+                        backgroundColor:
+                        selectedTypeIndex == index ? Colors.teal : Colors.grey,
+                      ),
+                      onTap: () {
+                        setState(() {
+                          selectedTypeIndex = index;
+                          attractionsStream = getAttractions(context);
+                        });
+                      }),
+                );
+              },
+            ),
+          ),
+        ),
+      ),
       title: Container(
         margin: EdgeInsets.symmetric(horizontal: 10),
         height: 40,
@@ -309,22 +314,6 @@ class _HomePageState extends State<HomePage> {
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         Radio(
-                          value: SortAttractionBy.attractionType,
-                          groupValue: _sortAttractionBy,
-                          onChanged: (SortAttractionBy? value) {
-                            setState(() {
-                              _sortAttractionBy = value!;
-                            });
-                            _sortData();
-                          },
-                        ),
-                        Text('Attraction Type')
-                      ],
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Radio(
                           value: SortAttractionBy.country,
                           groupValue: _sortAttractionBy,
                           onChanged: (SortAttractionBy? value) {
@@ -341,109 +330,6 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-            // Padding(
-            //   padding:
-            //       const EdgeInsets.fromLTRB(10, 0, 10, 0),
-            //   child: Divider(
-            //     color: Colors.teal,
-            //     thickness: 2,
-            //   ),
-            // ),
-            // Padding(
-            //   padding:
-            //       const EdgeInsets.fromLTRB(23, 20, 0, 0),
-            //   child: Text(
-            //     'Attraction Types',
-            //     style: TextStyle(
-            //       color: Colors.black87,
-            //       fontWeight: FontWeight.w500,
-            //       fontSize: 22,
-            //     ),
-            //   ),
-            // ),
-            // SizedBox(height: 5),
-            // Padding(
-            //   padding:
-            //       const EdgeInsets.fromLTRB(10, 0, 30, 0),
-            //   child: Row(
-            //     mainAxisAlignment:
-            //         MainAxisAlignment.spaceBetween,
-            //     children: [
-            //       Container(
-            //         width: 150,
-            //         child: Row(
-            //           mainAxisAlignment:
-            //               MainAxisAlignment.start,
-            //           children: [
-            //             Checkbox(
-            //               value: historicalCheckBox,
-            //               onChanged: (bool? value) {},
-            //             ),
-            //             Text('Historical')
-            //           ],
-            //         ),
-            //       ),
-            //       Container(
-            //         width: 150,
-            //         child: Row(
-            //           mainAxisAlignment:
-            //               MainAxisAlignment.start,
-            //           children: [
-            //             Checkbox(
-            //               value: beachesCheckBox,
-            //               onChanged: (bool? value) {
-            //                 setState((){
-            //                   beachesCheckBox = value!;
-            //
-            //                 });
-            //               },
-            //             ),
-            //             Text('Beaches')
-            //           ],
-            //         ),
-            //       ),
-            //     ],
-            //   ),
-            // ),
-            // SizedBox(height: 5),
-            // Padding(
-            //   padding:
-            //       const EdgeInsets.fromLTRB(10, 0, 30, 0),
-            //   child: Row(
-            //     mainAxisAlignment:
-            //         MainAxisAlignment.spaceBetween,
-            //     children: [
-            //       Container(
-            //         width: 150,
-            //         child: Row(
-            //           mainAxisAlignment:
-            //               MainAxisAlignment.start,
-            //           children: [
-            //             Checkbox(
-            //               value: urbanCheckBox,
-            //               onChanged: (bool? value) {},
-            //             ),
-            //             Text('Urban')
-            //           ],
-            //         ),
-            //       ),
-            //       Container(
-            //         width: 150,
-            //         child: Row(
-            //           mainAxisAlignment:
-            //               MainAxisAlignment.start,
-            //           children: [
-            //             Checkbox(
-            //               value: mountainsCheckBox,
-            //               onChanged: (bool? value) {},
-            //             ),
-            //             Text('Mountains')
-            //           ],
-            //         ),
-            //       ),
-            //     ],
-            //   ),
-            // ),
           ],
         ),
       );

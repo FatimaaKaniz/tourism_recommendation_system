@@ -5,14 +5,14 @@ import 'package:tourism_recommendation_system/custom_packages/tools/validators.d
 import 'package:provider/provider.dart';
 import 'package:tourism_recommendation_system/services/database.dart';
 
-enum EmailSignInFormType { signIn, register, forgotPassword }
+enum SignInFormType { signIn, register, forgotPassword }
 
-class EmailSignInModel with EmailAndPasswordValidators, ChangeNotifier {
-  EmailSignInModel({
+class SignInModel with EmailAndPasswordValidators, ChangeNotifier {
+  SignInModel({
     required this.auth,
     this.email = '',
     this.password = '',
-    this.formType = EmailSignInFormType.signIn,
+    this.formType = SignInFormType.signIn,
     this.isLoading = false,
     this.submitted = false,
     this.isAdmin = false,
@@ -23,7 +23,7 @@ class EmailSignInModel with EmailAndPasswordValidators, ChangeNotifier {
   final AuthBase auth;
   String email;
   String password;
-  EmailSignInFormType formType;
+  SignInFormType formType;
   bool isLoading;
   bool submitted;
   bool isAdmin;
@@ -40,18 +40,18 @@ class EmailSignInModel with EmailAndPasswordValidators, ChangeNotifier {
       }
       updateWith(isLoading: true);
       switch (formType) {
-        case EmailSignInFormType.signIn:
+        case SignInFormType.signIn:
           await auth.signInWithEmailAndPassword(email, password, isAdmin);
           await updateUser(db);
           break;
-        case EmailSignInFormType.register:
+        case SignInFormType.register:
           await auth.createUserWithEmailAndPassword(
               email, password, isAdmin, name);
           if (ifExists != null && !ifExists) {
             await updateUser(db);
           }
           break;
-        case EmailSignInFormType.forgotPassword:
+        case SignInFormType.forgotPassword:
           await auth.sendPasswordResetEmail(email);
           updateWith(isLoading: false);
           break;
@@ -77,7 +77,7 @@ class EmailSignInModel with EmailAndPasswordValidators, ChangeNotifier {
 
   void updatePassword(String password) => updateWith(password: password);
 
-  void updateFormType(EmailSignInFormType formType) {
+  void updateFormType(SignInFormType formType) {
     updateWith(
       email: '',
       password: '',
@@ -92,7 +92,7 @@ class EmailSignInModel with EmailAndPasswordValidators, ChangeNotifier {
   void updateWith({
     String? email,
     String? password,
-    EmailSignInFormType? formType,
+    SignInFormType? formType,
     bool? isLoading,
     bool? submitted,
     bool? isAdmin,
@@ -112,49 +112,49 @@ class EmailSignInModel with EmailAndPasswordValidators, ChangeNotifier {
   }
 
   String get passwordLabelText {
-    if (formType == EmailSignInFormType.register) {
+    if (formType == SignInFormType.register) {
       return 'Password (8+ characters)';
     }
     return 'Password';
   }
 
   String? get primaryButtonText {
-    return <EmailSignInFormType, String>{
-      EmailSignInFormType.register: 'Create an account',
-      EmailSignInFormType.signIn: 'Sign in',
-      EmailSignInFormType.forgotPassword: 'Send Reset Link',
+    return <SignInFormType, String>{
+      SignInFormType.register: 'Create an account',
+      SignInFormType.signIn: 'Sign in',
+      SignInFormType.forgotPassword: 'Send Reset Link',
     }[formType];
   }
 
   String? get secondaryButtonText {
-    return <EmailSignInFormType, String>{
-      EmailSignInFormType.register: 'Already have an Account?',
-      EmailSignInFormType.signIn: "Don't have an account?",
-      EmailSignInFormType.forgotPassword: 'Back to SignIn',
+    return <SignInFormType, String>{
+      SignInFormType.register: 'Already have an Account?',
+      SignInFormType.signIn: "Don't have an account?",
+      SignInFormType.forgotPassword: 'Back to SignIn',
     }[formType];
   }
 
-  EmailSignInFormType? get secondaryActionFormType {
-    return <EmailSignInFormType, EmailSignInFormType>{
-      EmailSignInFormType.register: EmailSignInFormType.signIn,
-      EmailSignInFormType.signIn: EmailSignInFormType.register,
-      EmailSignInFormType.forgotPassword: EmailSignInFormType.signIn,
+  SignInFormType? get secondaryActionFormType {
+    return <SignInFormType, SignInFormType>{
+      SignInFormType.register: SignInFormType.signIn,
+      SignInFormType.signIn: SignInFormType.register,
+      SignInFormType.forgotPassword: SignInFormType.signIn,
     }[formType];
   }
 
   String? get errorAlertTitle {
-    return <EmailSignInFormType, String>{
-      EmailSignInFormType.register: "Registration Failed!",
-      EmailSignInFormType.signIn: "Sign In Failed",
-      EmailSignInFormType.forgotPassword: "Password Reset Link Sending failed!",
+    return <SignInFormType, String>{
+      SignInFormType.register: "Registration Failed!",
+      SignInFormType.signIn: "Sign In Failed",
+      SignInFormType.forgotPassword: "Password Reset Link Sending failed!",
     }[formType];
   }
 
   String? get title {
-    return <EmailSignInFormType, String>{
-      EmailSignInFormType.register: "Register",
-      EmailSignInFormType.signIn: "Sign In",
-      EmailSignInFormType.forgotPassword: "Forget password",
+    return <SignInFormType, String>{
+      SignInFormType.register: "Register",
+      SignInFormType.signIn: "Sign In",
+      SignInFormType.forgotPassword: "Forget password",
     }[formType];
   }
 
@@ -163,7 +163,7 @@ class EmailSignInModel with EmailAndPasswordValidators, ChangeNotifier {
   }
 
   bool get canSubmitPassword {
-    if (formType == EmailSignInFormType.register) {
+    if (formType == SignInFormType.register) {
       return passwordRegisterSubmitValidator.isValid(password);
     }
     return passwordSignInSubmitValidator.isValid(password);
@@ -174,7 +174,7 @@ class EmailSignInModel with EmailAndPasswordValidators, ChangeNotifier {
   }
 
   bool get canSubmit {
-    final bool canSubmitFields = formType == EmailSignInFormType.forgotPassword
+    final bool canSubmitFields = formType == SignInFormType.forgotPassword
         ? canSubmitEmail
         : canSubmitEmail && canSubmitPassword;
     return canSubmitFields && !isLoading;
