@@ -3,13 +3,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_place/google_place.dart';
 import 'package:provider/provider.dart';
-import 'package:tourism_recommendation_system/home/common/list_items_builder.dart';
-import 'package:tourism_recommendation_system/home/standard_user/attraction_details_page.dart';
-import 'package:tourism_recommendation_system/home/standard_user/attraction_list_card.dart';
-import 'package:tourism_recommendation_system/models/attraction_model.dart';
+import 'package:tourism_recommendation_system/model/attraction.dart';
+import 'package:tourism_recommendation_system/view/home/common/list_items_builder.dart';
+import 'package:tourism_recommendation_system/view/home/standard_user/attraction_details_page.dart';
+import 'package:tourism_recommendation_system/view/home/standard_user/attraction_list_card.dart';
+import 'package:tourism_recommendation_system/view_model/attraction_view_model.dart';
 import 'package:tourism_recommendation_system/services/api_keys.dart';
 import 'package:tourism_recommendation_system/services/database.dart';
-
 
 class HomePage extends StatefulWidget {
   HomePage({Key? key}) : super(key: key);
@@ -61,8 +61,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildContents(BuildContext context) {
-    final database = Provider.of<Database>(context, listen: false);
-
     var types = AttractionType.values.map((e) => e.name).toList();
     types.insert(0, 'All');
 
@@ -78,10 +76,14 @@ class _HomePageState extends State<HomePage> {
             snapshot: snapshot,
             itemBuilder: (context, attraction) {
               return AttractionListCard(
-                attraction: attraction as Attraction,
+                attractionViewModel:
+                    AttractionViewModel(attraction: attraction as Attraction),
                 isCalled: true,
-                onTap: () =>
-                    _showDetailsPage(googlePlace, context, attraction),
+                onTap: () => _showDetailsPage(
+                  googlePlace,
+                  context,
+                  AttractionViewModel(attraction: attraction),
+                ),
               );
             },
           ),
@@ -174,8 +176,9 @@ class _HomePageState extends State<HomePage> {
                             color: Colors.white,
                           ),
                         ),
-                        backgroundColor:
-                        selectedTypeIndex == index ? Colors.teal : Colors.grey,
+                        backgroundColor: selectedTypeIndex == index
+                            ? Colors.teal
+                            : Colors.grey,
                       ),
                       onTap: () {
                         setState(() {
@@ -336,8 +339,8 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  void _showDetailsPage(
-      GooglePlace googlePlace, BuildContext context, Attraction attraction) {
-    AttractionDetailsPage.show(context, googlePlace, attraction);
+  void _showDetailsPage(GooglePlace googlePlace, BuildContext context,
+      AttractionViewModel attractionViewModel) {
+    AttractionDetailsPage.show(context, googlePlace, attractionViewModel);
   }
 }

@@ -2,15 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 import 'package:tourism_recommendation_system/custom_packages/widgets/dialogs/alert_dialogs.dart';
-import 'package:tourism_recommendation_system/home/admin/add_attraction_page.dart';
-import 'package:tourism_recommendation_system/home/admin/attraction_list_tile.dart';
-import 'package:tourism_recommendation_system/home/common/list_items_builder.dart';
-import 'package:tourism_recommendation_system/home/profile/profile_page.dart';
-import 'package:tourism_recommendation_system/models/attraction_model.dart';
-import 'package:tourism_recommendation_system/models/user_model.dart';
-import 'package:tourism_recommendation_system/services/database.dart';
+import 'package:tourism_recommendation_system/model/attraction.dart';
+import 'package:tourism_recommendation_system/view/home/admin/add_attraction_page.dart';
+import 'package:tourism_recommendation_system/view/home/admin/attraction_list_tile.dart';
+import 'package:tourism_recommendation_system/view/home/common/list_items_builder.dart';
+import 'package:tourism_recommendation_system/view_model/attraction_view_model.dart';
 
-import '../../services/auth_base.dart';
+import 'package:tourism_recommendation_system/services/database.dart';
 
 class AdminHome extends StatelessWidget {
   @override
@@ -68,23 +66,27 @@ class AdminHome extends StatelessWidget {
               builder: (context, snapshot) {
                 return ListItemsBuilder<Attraction>(
                   snapshot: snapshot,
-                  itemBuilder: (context, attraction) => Dismissible(
-                    key: UniqueKey(),
-                    background: leftEditIcon,
-                    secondaryBackground: rightDeleteIcon,
-                    onDismissed: (direction) {
-                      if (direction == DismissDirection.endToStart)
-                        _delete(context, attraction);
-                      else
-                        _edit(attraction, context);
-                    },
-                    child: AttractionListTile(
-                      attraction: attraction,
-                      onTap: () {
-                        _edit(attraction, context);
+                  itemBuilder: (context, attraction) {
+                    var attractionViewModel = AttractionViewModel(attraction: attraction);
+
+                    return Dismissible(
+                      key: UniqueKey(),
+                      background: leftEditIcon,
+                      secondaryBackground: rightDeleteIcon,
+                      onDismissed: (direction) {
+                        if (direction == DismissDirection.endToStart)
+                          _delete(context, attraction);
+                        else
+                          _edit(attractionViewModel, context);
                       },
-                    ),
-                  ),
+                      child: AttractionListTile(
+                        attraction: attraction,
+                        onTap: () {
+                          _edit(attractionViewModel, context);
+                        },
+                      ),
+                    );
+                  },
                 );
               },
             ),
@@ -94,9 +96,9 @@ class AdminHome extends StatelessWidget {
     );
   }
 
-  void _edit(Attraction attraction, BuildContext context) {
-    attraction.updateWith(isUpdate: true);
-    AddAttractionsPage.show(context, attraction: attraction);
+  void _edit(AttractionViewModel attractionViewModel, BuildContext context) {
+    attractionViewModel.updateWith(isUpdate: true);
+    AddAttractionsPage.show(context, attraction: attractionViewModel);
   }
 
   Future<void> _delete(BuildContext context, Attraction attraction) async {
@@ -112,6 +114,4 @@ class AdminHome extends StatelessWidget {
       );
     }
   }
-
-
 }

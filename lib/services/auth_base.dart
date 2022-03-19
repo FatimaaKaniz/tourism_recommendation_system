@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:tourism_recommendation_system/models/user_model.dart';
+import 'package:tourism_recommendation_system/model/user.dart';
 
 abstract class AuthBase {
   User? get currentUser;

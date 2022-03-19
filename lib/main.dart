@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:splash_screen_view/SplashScreenView.dart';
-import 'package:tourism_recommendation_system/main_page.dart';
+import 'package:tourism_recommendation_system/view/main_page.dart';
 import 'package:tourism_recommendation_system/services/auth.dart';
 import 'package:tourism_recommendation_system/services/auth_base.dart';
 import 'package:tourism_recommendation_system/services/database.dart';

@@ -1,8 +1,9 @@
 import 'dart:io';
 
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:tourism_recommendation_system/models/attraction_model.dart';
-import 'package:tourism_recommendation_system/models/user_model.dart';
+import 'package:tourism_recommendation_system/model/attraction.dart';
+import 'package:tourism_recommendation_system/model/user.dart';
+
 import 'package:tourism_recommendation_system/services/api_path.dart';
 
 import 'firestore_service.dart';

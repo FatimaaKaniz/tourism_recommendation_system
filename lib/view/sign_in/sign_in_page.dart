@@ -5,23 +5,23 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:social_login_buttons/social_login_buttons.dart';
 import 'package:tourism_recommendation_system/custom_packages/widgets/dialogs/alert_dialogs.dart';
-import 'package:tourism_recommendation_system/models/sign_in_model.dart';
-import 'package:tourism_recommendation_system/models/user_model.dart';
+import 'package:tourism_recommendation_system/model/user.dart';
+import 'package:tourism_recommendation_system/view_model/sign_in_view_model.dart';
 import 'package:tourism_recommendation_system/services/auth_base.dart';
 import 'package:tourism_recommendation_system/services/database.dart';
 
 class SignInForm extends StatefulWidget {
   SignInForm({required this.model, required this.db});
 
-  final SignInModel model;
+  final SignInViewModel model;
   final Database db;
 
   static Widget create(BuildContext context) {
     final auth = Provider.of<AuthBase>(context, listen: false);
     final db = Provider.of<Database>(context, listen: false);
-    return ChangeNotifierProvider<SignInModel>(
-      create: (_) => SignInModel(auth: auth),
-      child: Consumer<SignInModel>(
+    return ChangeNotifierProvider<SignInViewModel>(
+      create: (_) => SignInViewModel(auth: auth),
+      child: Consumer<SignInViewModel>(
           builder: (_, model, __) => SignInForm(
               model: model,
               db: db) //every time called when notify listener called
@@ -39,7 +39,7 @@ class _SignInFormState extends State<SignInForm> {
   final TextEditingController _passwordController = TextEditingController();
   final FocusScopeNode _node = FocusScopeNode();
 
-  SignInModel get model => widget.model;
+  SignInViewModel get model => widget.model;
 
   Database get db => widget.db;
 
@@ -55,8 +55,8 @@ class _SignInFormState extends State<SignInForm> {
     try {
       bool success = false;
       if (model.formType == SignInFormType.signIn) {
-        if (await checkIfUserExists(model.email)) {
-          if (await canLogin(model.email, model.isAdmin)) {
+        if (await model.checkIfUserExists(db)) {
+          if (await model.canLogin(db)) {
             success = await model.submit(context);
           } else {
             Fluttertoast.showToast(msg: 'Restricted User Type!');
@@ -192,26 +192,6 @@ class _SignInFormState extends State<SignInForm> {
     );
   }
 
-  Future<bool> checkIfUserExists(String email) async {
-    final users = await db.usersStream().first;
-    final allEmails = users.map((user) => user.email).toList();
-    if (!allEmails.contains(email)) {
-      return false;
-    }
-    return true;
-  }
-
-  Future<bool> canLogin(String email, bool isAdmin) async {
-    final users = await db.usersStream().first;
-    final allUsers = users.map((user) => user).toList();
-    bool _isAdmin =
-        allUsers.where((user) => user.email == email).first.isAdmin!;
-    if (_isAdmin == isAdmin) {
-      return true;
-    }
-    return false;
-  }
-
   Future<void> _signInWithGoogle(BuildContext context) async {
     final auth = Provider.of<AuthBase>(context, listen: false);
     try {
@@ -222,13 +202,13 @@ class _SignInFormState extends State<SignInForm> {
       } else {
         final googleAuth = googleSignInInfo.elementAt(0);
         final email = googleSignInInfo.elementAt(1);
-        bool userExists = await checkIfUserExists(email);
+        bool userExists = await model.checkIfUserExists(db, email: email);
         var user = MyUser(email: email, isAdmin: model.isAdmin);
         if (!userExists && !model.isAdmin) {
           await auth.signInWithGoogle(googleAuth, model.isAdmin);
           auth.setMyUser(user);
         } else {
-          if (await canLogin(email, model.isAdmin)) {
+          if (await model.canLogin(db, email: email)) {
             await auth.signInWithGoogle(googleAuth, model.isAdmin);
             auth.setMyUser(user);
           } else {

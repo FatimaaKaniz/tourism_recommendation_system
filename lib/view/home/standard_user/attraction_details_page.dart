@@ -7,36 +7,40 @@ import 'package:google_place/google_place.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:tourism_recommendation_system/models/user_model.dart';
+import 'package:tourism_recommendation_system/model/attraction.dart';
+import 'package:tourism_recommendation_system/view_model/attraction_view_model.dart';
+import 'package:tourism_recommendation_system/view_model/user_view_model.dart';
 import 'package:tourism_recommendation_system/services/auth_base.dart';
+import 'package:tourism_recommendation_system/services/database.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../models/attraction_model.dart';
-import '../../services/database.dart';
 
 class AttractionDetailsPage extends StatefulWidget {
   const AttractionDetailsPage({
     Key? key,
-    required this.attraction,
+    required this.attractionViewModel,
     required this.googlePlace,
     this.isSaved = false,
     this.user,
   }) : super(key: key);
-  final Attraction attraction;
+  final AttractionViewModel attractionViewModel;
   final GooglePlace googlePlace;
   final bool isSaved;
-  final MyUser? user;
+  final MyUserViewModel? user;
 
   @override
   _AttractionDetailsPageState createState() => _AttractionDetailsPageState(
-      attraction: attraction, googlePlace: googlePlace, isSaved: isSaved);
+        attractionViewModel: attractionViewModel,
+        googlePlace: googlePlace,
+        isSaved: isSaved,
+      );
 
-  static Future<void> show(
-      BuildContext context, GooglePlace googlePlace, Attraction attraction,
+  static Future<void> show(BuildContext context, GooglePlace googlePlace,
+      AttractionViewModel attractionViewModel,
       {bool isSaved = false}) async {
     await Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute(
         builder: (context) => AttractionDetailsPage(
-          attraction: attraction,
+          attractionViewModel: attractionViewModel,
           googlePlace: googlePlace,
           isSaved: isSaved,
         ),
@@ -48,49 +52,37 @@ class AttractionDetailsPage extends StatefulWidget {
 
 class _AttractionDetailsPageState extends State<AttractionDetailsPage> {
   _AttractionDetailsPageState({
-    required this.attraction,
+    required this.attractionViewModel,
     required this.googlePlace,
     required this.isSaved,
   });
 
-  final Attraction attraction;
+  final AttractionViewModel attractionViewModel;
   bool? openNow;
   bool isSaved;
   final GooglePlace googlePlace;
   List<Uint8List> photos = [];
 
+  Attraction get attraction => attractionViewModel.attraction;
+
   void getDetails(String placeId) async {
-    var result = await googlePlace.details
-        .get(attraction.googlePlaceId!, fields: "opening_hours");
-    if (result != null && result.result != null && mounted) {
+    bool? openNow = await attractionViewModel.getTimings(googlePlace);
+    if (mounted) {
       setState(() {
-        openNow = result.result!.openingHours?.openNow;
+        this.openNow = openNow;
       });
     }
+
     if (attraction.photoRef != null && attraction.photoRef!.length > 0) {
       attraction.photoRef!.forEach((ref) async {
-        var image = await getPhoto(ref!);
-        if (image != null) {
+        var image = await attractionViewModel.getPhoto(ref!, googlePlace);
+        if (image != null && mounted) {
           setState(() {
             photos.add(image);
           });
         }
       });
     }
-  }
-
-  Future<Uint8List?> getPhoto(String photoReference) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    if (prefs.containsKey(photoReference)) {
-      return Uint8List.fromList(prefs.getString(photoReference)!.codeUnits);
-    } else {
-      var result = await this.googlePlace.photos.get(photoReference, 200, 200);
-      if (result != null && mounted) {
-        prefs.setString(photoReference, String.fromCharCodes(result));
-        return result;
-      }
-    }
-    return null;
   }
 
   @override
@@ -108,7 +100,6 @@ class _AttractionDetailsPageState extends State<AttractionDetailsPage> {
   }
 
   launchURL(String url, String text) async {
-    print(url);
     if (await canLaunch(url)) {
       await launch(url,
           enableJavaScript: true, forceSafariVC: false, enableDomStorage: true);
@@ -309,7 +300,6 @@ class _AttractionDetailsPageState extends State<AttractionDetailsPage> {
                         ),
                       )
                     : Container(),
-
                 attraction.phoneNumber != null
                     ? Container(
                         margin: EdgeInsets.only(left: 15, top: 10),
@@ -384,7 +374,7 @@ class _AttractionDetailsPageState extends State<AttractionDetailsPage> {
       AuthBase auth, List<String?> places, Database db, String msg) {
     auth.myUser!.updateWith(savedPlacesIds: places);
     db.setUser(auth.myUser!, auth.currentUser!.uid);
-    Attraction.isSavedChanged = true;
+    AttractionViewModel.isSavedChanged = true;
     Fluttertoast.showToast(msg: msg);
   }
 }

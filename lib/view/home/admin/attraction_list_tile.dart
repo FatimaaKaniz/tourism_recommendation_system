@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tourism_recommendation_system/models/attraction_model.dart';
+import 'package:tourism_recommendation_system/model/attraction.dart';
 
 class AttractionListTile extends StatelessWidget {
   AttractionListTile({Key? key, required this.attraction, required this.onTap})

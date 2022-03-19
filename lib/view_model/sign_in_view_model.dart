@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:tourism_recommendation_system/models/user_model.dart';
+import 'package:tourism_recommendation_system/model/user.dart';
 import 'package:tourism_recommendation_system/services/auth_base.dart';
 import 'package:tourism_recommendation_system/custom_packages/tools/validators.dart';
 import 'package:provider/provider.dart';
@@ -7,8 +7,8 @@ import 'package:tourism_recommendation_system/services/database.dart';
 
 enum SignInFormType { signIn, register, forgotPassword }
 
-class SignInModel with EmailAndPasswordValidators, ChangeNotifier {
-  SignInModel({
+class SignInViewModel with EmailAndPasswordValidators, ChangeNotifier {
+  SignInViewModel({
     required this.auth,
     this.email = '',
     this.password = '',
@@ -29,6 +29,31 @@ class SignInModel with EmailAndPasswordValidators, ChangeNotifier {
   bool isAdmin;
   bool showPassword;
   String name;
+
+
+  Future<bool> checkIfUserExists(Database db, {String? email}) async {
+    email = email ?? this.email;
+    final users = await db.usersStream().first;
+    final allEmails = users.map((user) => user.email).toList();
+    if (!allEmails.contains(email)) {
+      return false;
+    }
+    return true;
+  }
+
+  Future<bool> canLogin(Database db,{String? email , bool? isAdmin} ) async {
+    email = email ?? this.email;
+    isAdmin = isAdmin ?? this.isAdmin;
+    final users = await db.usersStream().first;
+    final allUsers = users.map((user) => user).toList();
+    bool _isAdmin =
+    allUsers.where((user) => user.email == email).first.isAdmin!;
+    if (_isAdmin == isAdmin) {
+      return true;
+    }
+    return false;
+  }
+
 
   Future<bool> submit(BuildContext context, {bool? ifExists}) async {
     final db = Provider.of<Database>(context, listen: false);

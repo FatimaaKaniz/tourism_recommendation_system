@@ -1,35 +1,15 @@
-import 'package:flutter/cupertino.dart';
-import 'package:tourism_recommendation_system/custom_packages/tools/validators.dart';
 import 'package:collection/collection.dart';
 
 enum AttractionType { historical, mountains, beaches, urban }
 enum SortAttractionBy { name, attractionType, country }
 
-class Attraction with ChangeNotifier implements Comparable<Attraction> {
-  Attraction(
-      {this.name,
-        this.attractionType = AttractionType.historical,
-        this.googlePlaceId,
-        this.submitted = false,
-        this.isUpdate = false,
-        this.id,
-        this.url,
-        this.website,
-        this.address,
-        this.photoRef,
-        this.phoneNumber,
-        this.types,
-        this.country,
-        this.city});
-
+class Attraction implements Comparable<Attraction> {
   String? name;
   String? country;
   String? city;
   String? id;
   AttractionType? attractionType;
   String? googlePlaceId;
-  bool submitted;
-  bool isUpdate;
   String? address;
   String? phoneNumber;
   List<String?>? photoRef;
@@ -37,58 +17,20 @@ class Attraction with ChangeNotifier implements Comparable<Attraction> {
   String? url;
   List<String?>? types;
 
-  static bool isSavedChanged = false;
-
-  String? get nameErrorText => !submitted ||
-      (name != null &&
-          EmailAndPasswordValidators().nameValidator.isValid(name!))
-      ? null
-      : "Name shouldn't be empty!";
-
-  void updateName(String? name) => updateWith(name: name);
-
-  bool get canSubmit {
-    return name != null &&
-        name!.isNotEmpty &&
-        attractionType != null &&
-        googlePlaceId != null &&
-        googlePlaceId!.isNotEmpty;
-  }
-
-  void updateType(AttractionType? type) => updateWith(attractionType: type);
-
-  void updateWith({
-    String? name,
-    AttractionType? attractionType,
-    String? googlePlaceId,
-    bool? submitted,
-    bool? isUpdate,
-    String? address,
-    String? phone,
-    String? url,
-    String? website,
-    List<String?>? photoRef,
-    List<String?>? types,
-    String? id,
-    String? country,
-    String? city,
-  }) {
-    this.name = name ?? this.name;
-    this.country = country ?? this.country;
-    this.city = city ?? this.city;
-    this.address = address ?? this.address;
-    this.phoneNumber = phone ?? this.phoneNumber;
-    this.url = url ?? this.url;
-    this.website = website ?? this.website;
-    this.photoRef = photoRef ?? this.photoRef;
-    this.types = types ?? this.types;
-    this.submitted = submitted ?? this.submitted;
-    this.isUpdate = isUpdate ?? this.isUpdate;
-    this.attractionType = attractionType ?? this.attractionType;
-    this.googlePlaceId = googlePlaceId ?? this.googlePlaceId;
-    this.id = id ?? this.id;
-    notifyListeners();
-  }
+  Attraction({
+    this.name,
+    this.attractionType = AttractionType.historical,
+    this.googlePlaceId,
+    this.id,
+    this.url,
+    this.website,
+    this.address,
+    this.photoRef,
+    this.phoneNumber,
+    this.types,
+    this.country,
+    this.city,
+  });
 
   static AttractionType? getAttractionType(String type){
     return AttractionType.values.firstWhereOrNull((element) => element.name == type);
@@ -153,4 +95,33 @@ class Attraction with ChangeNotifier implements Comparable<Attraction> {
   int compareTo(Attraction other) {
     return this.name!.compareTo(other.name!);
   }
+
+  void updateWith({
+    String? name,
+    AttractionType? attractionType,
+    String? googlePlaceId,
+    String? address,
+    String? phone,
+    String? url,
+    String? website,
+    List<String?>? photoRef,
+    List<String?>? types,
+    String? id,
+    String? country,
+    String? city,
+  }) {
+    this.name = name ?? this.name;
+    this.country = country ?? this.country;
+    this.city = city ?? this.city;
+    this.address = address ?? this.address;
+    this.phoneNumber = phone ?? this.phoneNumber;
+    this.url = url ?? this.url;
+    this.website = website ?? this.website;
+    this.photoRef = photoRef ?? this.photoRef;
+    this.types = types ?? this.types;
+    this.attractionType = attractionType ?? this.attractionType;
+    this.googlePlaceId = googlePlaceId ?? this.googlePlaceId;
+    this.id = id ?? this.id;
+  }
+
 }

@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:tourism_recommendation_system/home/admin/admin_home.dart';
-import 'package:tourism_recommendation_system/home/common/cupertino_home_scaffold.dart';
-import 'package:tourism_recommendation_system/home/common/tab_items.dart';
-import 'package:tourism_recommendation_system/home/standard_user/homepage.dart';
-import 'package:tourism_recommendation_system/home/profile/profile_page.dart';
-import 'package:tourism_recommendation_system/home/standard_user/wish_list_page.dart';
-import 'package:tourism_recommendation_system/models/user_model.dart';
+import 'package:tourism_recommendation_system/controller/main_home_page_controller.dart';
+import 'package:tourism_recommendation_system/view/home/admin/admin_home.dart';
+import 'package:tourism_recommendation_system/view/home/common/cupertino_home_scaffold.dart';
+import 'package:tourism_recommendation_system/view/home/common/tab_items.dart';
+import 'package:tourism_recommendation_system/view/home/standard_user/homepage.dart';
+import 'package:tourism_recommendation_system/view/home/profile/profile_page.dart';
+import 'package:tourism_recommendation_system/model/user.dart';
+import 'package:tourism_recommendation_system/view/home/standard_user/wish_list_page.dart';
+import 'package:tourism_recommendation_system/view_model/user_view_model.dart';
 import 'package:tourism_recommendation_system/services/auth_base.dart';
 import 'package:tourism_recommendation_system/services/database.dart';
-
 
 class MainHomePage extends StatefulWidget {
   const MainHomePage({Key? key}) : super(key: key);
@@ -19,6 +20,7 @@ class MainHomePage extends StatefulWidget {
 }
 
 class _MainHomePageState extends State<MainHomePage> {
+  final MainHomePageController controller = MainHomePageController();
   TabItem _currentTab = TabItem.home;
   bool isAdmin = false;
 
@@ -30,28 +32,13 @@ class _MainHomePageState extends State<MainHomePage> {
     super.initState();
   }
 
-  Future<void> setIsAdmin(BuildContext context) async {
+  setIsAdmin(BuildContext context) async {
     final db = Provider.of<Database>(context, listen: false);
     final auth = Provider.of<AuthBase>(context, listen: false);
-    if (auth.isCurrentUserAdmin == null) {
-      final users = await db.usersStream().first;
-      var myUser =
-          users.where((user) => user.email == auth.currentUser!.email!).first;
-      bool admin = myUser.isAdmin!;
-      var places = myUser.savedPlacesIds;
-      setState(() {
-        auth.setCurrentUserAdmin(admin);
-        auth.setMyUser(MyUser(
-            email: auth.currentUser!.email,
-            isAdmin: admin,
-            name: auth.currentUser!.displayName,
-            savedPlacesIds: places,
-           ));
-        isAdmin = admin;
-      });
-    } else {
-      isAdmin = auth.isCurrentUserAdmin!;
-    }
+    bool isAdmin = await controller.setIsAdmin(db, auth);
+    setState(() {
+      this.isAdmin = isAdmin;
+    });
   }
 
   final Map<TabItem, GlobalKey<NavigatorState>> navigatorKeys = {
@@ -69,12 +56,14 @@ class _MainHomePageState extends State<MainHomePage> {
     return {
       TabItem.home: (_) => isAdmin ? AdminHome() : HomePage(),
       if (!isAdmin) TabItem.saved: (_) => WishListPage(user: auth.myUser!),
-      TabItem.profile: (context) => ChangeNotifierProvider<MyUser>(
-            create: (_) => MyUser(
+      TabItem.profile: (context) => ChangeNotifierProvider<MyUserViewModel>(
+            create: (_) => MyUserViewModel(
+              myUser: MyUser(
                 email: auth.currentUser?.email,
                 isAdmin: isAdmin,
                 name: auth.currentUser?.displayName,
-                ),
+              ),
+            ),
             child: ProfilePage(),
           ),
     };

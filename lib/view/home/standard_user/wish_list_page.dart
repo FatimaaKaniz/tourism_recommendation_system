@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:google_place/google_place.dart';
 import 'package:provider/provider.dart';
-import 'package:tourism_recommendation_system/home/common/list_items_builder.dart';
-import 'package:tourism_recommendation_system/home/standard_user/attraction_details_page.dart';
-import 'package:tourism_recommendation_system/home/standard_user/attraction_list_card.dart';
-import 'package:tourism_recommendation_system/models/attraction_model.dart';
-import 'package:tourism_recommendation_system/models/user_model.dart';
+import 'package:tourism_recommendation_system/model/attraction.dart';
+import 'package:tourism_recommendation_system/view/home/common/list_items_builder.dart';
+import 'package:tourism_recommendation_system/view/home/standard_user/attraction_details_page.dart';
+import 'package:tourism_recommendation_system/view/home/standard_user/attraction_list_card.dart';
+import 'package:tourism_recommendation_system/model/user.dart';
+import 'package:tourism_recommendation_system/view_model/attraction_view_model.dart';
+import 'package:tourism_recommendation_system/view_model/user_view_model.dart';
 import 'package:tourism_recommendation_system/services/api_keys.dart';
 import 'package:tourism_recommendation_system/services/database.dart';
-
 
 class WishListPage extends StatefulWidget {
   const WishListPage({Key? key, required this.user}) : super(key: key);
@@ -26,7 +27,7 @@ class _WishListPageState extends State<WishListPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (Attraction.isSavedChanged) {
+    if (AttractionViewModel.isSavedChanged) {
       Stream<List<Attraction>> attractions;
       WidgetsBinding.instance?.addPostFrameCallback((_) async {
         attractions = await getAttractions();
@@ -34,7 +35,7 @@ class _WishListPageState extends State<WishListPage> {
           this.attractions = attractions;
         });
       });
-      Attraction.isSavedChanged = false;
+      AttractionViewModel.isSavedChanged = false;
     }
     return Scaffold(
       body: _buildContents(context),
@@ -68,9 +69,13 @@ class _WishListPageState extends State<WishListPage> {
               return ListItemsBuilder(
                 snapshot: snapshot,
                 itemBuilder: (context, attraction) => AttractionListCard(
-                  attraction: attraction as Attraction,
-                  onTap: () =>
-                      _showDetailsPage(googlePlace, context, attraction),
+                  attractionViewModel:
+                      AttractionViewModel(attraction: attraction as Attraction),
+                  onTap: () => _showDetailsPage(
+                    googlePlace,
+                    context,
+                    AttractionViewModel(attraction: attraction),
+                  ),
                 ),
               );
             },
@@ -81,8 +86,8 @@ class _WishListPageState extends State<WishListPage> {
   }
 
   void _showDetailsPage(GooglePlace googlePlace, BuildContext context,
-      Attraction attraction) async {
-    await AttractionDetailsPage.show(context, googlePlace, attraction,
+      AttractionViewModel attractionViewModel) async {
+    await AttractionDetailsPage.show(context, googlePlace, attractionViewModel,
         isSaved: true);
   }
 

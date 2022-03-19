@@ -4,21 +4,20 @@ import 'package:flutter/material.dart';
 import 'package:google_place/google_place.dart';
 import 'package:loading_gifs/loading_gifs.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:tourism_recommendation_system/models/attraction_model.dart';
+import 'package:tourism_recommendation_system/model/attraction.dart';
 import 'package:tourism_recommendation_system/services/api_keys.dart';
-
+import 'package:tourism_recommendation_system/view_model/attraction_view_model.dart';
 
 class AttractionListCard extends StatefulWidget {
-
   AttractionListCard(
       {Key? key,
-      required this.attraction,
+      required this.attractionViewModel,
       required this.onTap,
       this.isCalled = true})
       : super(key: key);
 
-   bool isCalled;
-  final Attraction attraction;
+  bool isCalled;
+  final AttractionViewModel attractionViewModel;
   final VoidCallback onTap;
 
   @override
@@ -26,14 +25,18 @@ class AttractionListCard extends StatefulWidget {
 }
 
 class _AttractionListCardState extends State<AttractionListCard> {
+  AttractionViewModel get attractionViewModel => widget.attractionViewModel;
+
+  Attraction get attraction => attractionViewModel.attraction;
 
   final googlePlace = GooglePlace(APIKeys.googleMapsAPIKeys);
   Uint8List? image;
 
   void getDetails(List<String?>? photoRefs) async {
-    if (widget.attraction.photoRef != null) {
-      var img = await getPhoto(widget.attraction.photoRef!.elementAt(0)!);
-      if(mounted)
+    if (attraction.photoRef != null) {
+      var img = await attractionViewModel.getPhoto(
+          attraction.photoRef!.elementAt(0)!, googlePlace);
+      if (mounted)
         setState(() {
           image = img;
         });
@@ -57,13 +60,13 @@ class _AttractionListCardState extends State<AttractionListCard> {
   @override
   void initState() {
     super.initState();
-    getDetails(widget.attraction.photoRef!);
+    getDetails(attraction.photoRef!);
   }
 
   @override
   Widget build(BuildContext context) {
     if (widget.isCalled) {
-      getDetails(widget.attraction.photoRef!);
+      getDetails(attraction.photoRef!);
       widget.isCalled = false;
     }
 
@@ -99,7 +102,7 @@ class _AttractionListCardState extends State<AttractionListCard> {
                   color: Colors.black.withOpacity(0.5),
                   child: Center(
                     child: Text(
-                      widget.attraction.name!,
+                      attraction.name!,
                       style: TextStyle(
                           fontSize: 20,
                           color: Colors.white,

@@ -10,7 +10,8 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tourism_recommendation_system/custom_packages/widgets/avatar.dart';
 import 'package:tourism_recommendation_system/custom_packages/widgets/dialogs/alert_dialogs.dart';
-import 'package:tourism_recommendation_system/models/user_model.dart';
+import 'package:tourism_recommendation_system/model/user.dart';
+import 'package:tourism_recommendation_system/view_model/user_view_model.dart';
 import 'package:tourism_recommendation_system/services/auth_base.dart';
 import 'package:tourism_recommendation_system/services/database.dart';
 
@@ -55,7 +56,7 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthBase>(context, listen: false);
-    final user = Provider.of<MyUser>(context);
+    final userViewModel = Provider.of<MyUserViewModel>(context);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -72,7 +73,7 @@ class _ProfilePageState extends State<ProfilePage> {
         ],
         bottom: PreferredSize(
           preferredSize: Size.fromHeight(130),
-          child: _buildUserInfo(auth.currentUser!, user),
+          child: _buildUserInfo(auth.currentUser!, userViewModel.myUser),
         ),
       ),
       body: SingleChildScrollView(
@@ -103,11 +104,11 @@ class _ProfilePageState extends State<ProfilePage> {
                           color: Colors.grey,
                         ),
                       ),
-                      if (!user.isNameEditAble) ...<Widget>[
+                      if (!userViewModel.isNameEditAble) ...<Widget>[
                         SizedBox(
                           width: MediaQuery.of(context).size.width * 0.56,
                           child: Text(
-                            user.name ?? "",
+                            userViewModel.myUser.name ?? "",
                             style: TextStyle(
                               fontSize: 20,
                             ),
@@ -118,10 +119,10 @@ class _ProfilePageState extends State<ProfilePage> {
                           height: 50,
                           width: MediaQuery.of(context).size.width * 0.56,
                           child: TextFormField(
-                            initialValue: user.name ?? "",
+                            initialValue: userViewModel.myUser.name ?? "",
                             style: TextStyle(fontSize: 20),
                             decoration: InputDecoration(
-                              errorText: user.name?.trim() == ""
+                              errorText: userViewModel.myUser.name?.trim() == ""
                                   ? "Name can't be empty!"
                                   : null,
                             ),
@@ -129,7 +130,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             textInputAction: TextInputAction.done,
                             keyboardType: TextInputType.name,
                             keyboardAppearance: Brightness.light,
-                            onChanged: user.updateName,
+                            onChanged: userViewModel.myUser.updateName,
                           ),
                         )
                       ],
@@ -142,25 +143,25 @@ class _ProfilePageState extends State<ProfilePage> {
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
                       child: IconButton(
-                        icon: user.isNameEditAble
+                        icon: userViewModel.isNameEditAble
                             ? Icon(
                                 Icons.check,
-                                color: user.canNameSubmit
+                                color: userViewModel.canNameSubmit
                                     ? Colors.teal
                                     : Colors.grey,
                               )
                             : Icon(Icons.edit),
                         color: Colors.teal,
                         onPressed: () {
-                          if (user.isNameEditAble) {
-                            if (user.canNameSubmit) {
-                              user.updateWith(
-                                  isNameEditAble: !user.isNameEditAble);
-                              auth.currentUser!.updateDisplayName(user.name);
+                          if (userViewModel.isNameEditAble) {
+                            if (userViewModel.canNameSubmit) {
+                              userViewModel.updateWith(
+                                  isNameEditAble: !userViewModel.isNameEditAble);
+                              auth.currentUser!.updateDisplayName(userViewModel.myUser.name);
                             }
                           } else {
-                            user.updateWith(
-                                isNameEditAble: !user.isNameEditAble);
+                            userViewModel.updateWith(
+                                isNameEditAble: !userViewModel.isNameEditAble);
                           }
                         },
                       ),
@@ -193,7 +194,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       ),
                       Text(
-                        user.email!,
+                        userViewModel.myUser.email!,
                         style: TextStyle(
                           fontSize: 20,
                         ),

@@ -6,8 +6,9 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:social_login_buttons/social_login_buttons.dart';
 import 'package:tourism_recommendation_system/custom_packages/widgets/dialogs/alert_dialogs.dart';
-import 'package:tourism_recommendation_system/home/admin/location_selector.dart';
-import 'package:tourism_recommendation_system/models/attraction_model.dart';
+import 'package:tourism_recommendation_system/model/attraction.dart';
+import 'package:tourism_recommendation_system/view/home/admin/location_selector.dart';
+import 'package:tourism_recommendation_system/view_model/attraction_view_model.dart';
 import 'package:tourism_recommendation_system/services/api_keys.dart';
 import 'package:flutter/material.dart';
 import 'package:tourism_recommendation_system/services/database.dart';
@@ -17,12 +18,16 @@ class AddAttractionsPage extends StatefulWidget {
   final Database db;
 
   static Future<void> show(BuildContext context,
-      {Attraction? attraction}) async {
+      {AttractionViewModel? attraction}) async {
     final database = Provider.of<Database>(context, listen: false);
     await Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute(
         builder: (context) => ChangeNotifierProvider(
-          create: (_) => attraction ?? Attraction(),
+          create: (_) =>
+              attraction ??
+              AttractionViewModel(
+                attraction: Attraction(),
+              ),
           child: AddAttractionsPage(
             db: database,
           ),
@@ -42,14 +47,17 @@ class _AddAttractionsPageState extends State<AddAttractionsPage> {
   String? address;
   String? selectedPlaceId;
   bool isUpdate = false;
+  Database get db => widget.db;
+
+
 
   @override
   Widget build(BuildContext context) {
-    final attraction = Provider.of<Attraction>(context);
-    isUpdate = attraction.isUpdate;
+    final attractionViewModel = Provider.of<AttractionViewModel>(context);
+    isUpdate = attractionViewModel.isUpdate;
     if (isUpdate) {
-      address = attraction.address!;
-      _nameController = TextEditingController(text: attraction.name);
+      address = attractionViewModel.attraction.address!;
+      _nameController = TextEditingController(text: attractionViewModel.attraction.name);
       _nameController.selection = TextSelection.fromPosition(
           TextPosition(offset: _nameController.text.length));
     }
@@ -68,8 +76,8 @@ class _AddAttractionsPageState extends State<AddAttractionsPage> {
   Future<void> _deleteAttraction(BuildContext context) async {
     try {
       final db = Provider.of<Database>(context, listen: false);
-      final attraction = Provider.of<Attraction>(context, listen: false);
-      await db.deleteAttraction(attraction);
+      final attractionViewModel = Provider.of<AttractionViewModel>(context, listen: false);
+      await db.deleteAttraction(attractionViewModel.attraction);
       Fluttertoast.showToast(msg: 'Attraction Deleted!');
       Navigator.of(context, rootNavigator: true).pop();
     } catch (e) {
@@ -78,7 +86,7 @@ class _AddAttractionsPageState extends State<AddAttractionsPage> {
   }
 
   Widget _buildContents(BuildContext context) {
-    final attraction = Provider.of<Attraction>(context);
+    final attractionViewModel = Provider.of<AttractionViewModel>(context);
 
     return SingleChildScrollView(
       child: Center(
@@ -91,7 +99,7 @@ class _AddAttractionsPageState extends State<AddAttractionsPage> {
                     ? MainAxisAlignment.center
                     : MainAxisAlignment.spaceBetween,
                 children: [
-                  if (attraction.isUpdate) ...<Widget>[
+                  if (attractionViewModel.isUpdate) ...<Widget>[
                     Opacity(
                       opacity: 0,
                       child: IconButton(
@@ -111,7 +119,7 @@ class _AddAttractionsPageState extends State<AddAttractionsPage> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  if (attraction.isUpdate) ...<Widget>[
+                  if (attractionViewModel.isUpdate) ...<Widget>[
                     IconButton(
                       onPressed: () {
                         _deleteAttraction(context);
@@ -128,7 +136,7 @@ class _AddAttractionsPageState extends State<AddAttractionsPage> {
               SingleChildScrollView(
                 child: Card(
                   elevation: 4.0,
-                  child: attraction.isUpdate && address == null
+                  child: attractionViewModel.isUpdate && address == null
                       ? Center(
                           child: LoadingAnimationWidget.staggeredDotWave(
                             color: Colors.teal,
@@ -145,14 +153,14 @@ class _AddAttractionsPageState extends State<AddAttractionsPage> {
                                 decoration: InputDecoration(
                                   labelText: 'Name',
                                   labelStyle: TextStyle(fontSize: 19),
-                                  errorText: attraction.nameErrorText,
+                                  errorText: attractionViewModel.nameErrorText,
                                 ),
                                 style: TextStyle(fontSize: 18),
                                 autocorrect: false,
                                 textInputAction: TextInputAction.next,
                                 keyboardType: TextInputType.name,
                                 keyboardAppearance: Brightness.light,
-                                onChanged: attraction.updateName,
+                                onChanged: attractionViewModel.updateName,
                               ),
                               SizedBox(height: 10),
                               DropdownButtonFormField<AttractionType>(
@@ -163,7 +171,7 @@ class _AddAttractionsPageState extends State<AddAttractionsPage> {
                                   ),
                                 ),
                                 value: isUpdate
-                                    ? attraction.attractionType
+                                    ? attractionViewModel.attraction.attractionType
                                     : AttractionType.historical,
                                 items: AttractionType.values
                                     .map((AttractionType attractionType) {
@@ -175,10 +183,10 @@ class _AddAttractionsPageState extends State<AddAttractionsPage> {
                                       ));
                                 }).toList(),
                                 onChanged: (type) =>
-                                    attraction.updateType(type),
+                                    attractionViewModel.updateType(type),
                               ),
                               SizedBox(height: 20),
-                              if (attraction.googlePlaceId == null) ...<Widget>[
+                              if (attractionViewModel.attraction.googlePlaceId == null) ...<Widget>[
                                 Text(
                                   'Address',
                                   style: TextStyle(
@@ -214,12 +222,15 @@ class _AddAttractionsPageState extends State<AddAttractionsPage> {
                                           ),
                                         ),
                                         if (address != null ||
-                                            attraction.isUpdate) ...<Widget>[
+                                            attractionViewModel.isUpdate) ...<Widget>[
                                           SizedBox(
                                             height: 5,
                                           ),
                                           SizedBox(
-                                            width: MediaQuery.of(context).size.width*0.75,
+                                            width: MediaQuery.of(context)
+                                                    .size
+                                                    .width *
+                                                0.75,
                                             child: Text(
                                               address!,
                                               style: TextStyle(
@@ -254,7 +265,7 @@ class _AddAttractionsPageState extends State<AddAttractionsPage> {
                                 backgroundColor: Colors.teal,
                                 disabledBackgroundColor: Colors.grey,
                                 onPressed:
-                                    !attraction.canSubmit ? null : _submit,
+                                    !attractionViewModel.canSubmit ? null : _submit,
                               )
                             ],
                           ),
@@ -268,86 +279,49 @@ class _AddAttractionsPageState extends State<AddAttractionsPage> {
     );
   }
 
-  _getLocationDetails(Attraction attraction) async {
-    var result = await googlePlace.details.get(attraction.googlePlaceId!,
-        fields:
-        "photo,formatted_address,url,website,international_phone_number,type,address_component");
-    if (result != null && result.result != null && mounted) {
-      String? city;
-      String? country;
+
+  _getLocationDetails(AttractionViewModel attractionViewModel ) async {
+    await attractionViewModel.getLocationDetails(googlePlace);
+    if (mounted) {
       setState(() {
-        address = result.result?.formattedAddress;
+        address = attractionViewModel.attraction.address ?? "";
         _nameController =
             TextEditingController(text: address?.split(',').elementAt(0));
-        result.result?.addressComponents
-            ?.where((element) =>
-        element.types != null && element.types!.contains('locality'))
-            .forEach((element) {
-          city = element.longName;
-        });
-        result.result?.addressComponents
-            ?.where((element) =>
-        element.types != null && element.types!.contains('country'))
-            .forEach((element) {
-          country = element.longName;
-        });
-        attraction.updateWith(
-          name: address?.split(',').elementAt(0),
-          phone: result.result?.internationalPhoneNumber,
-          address: result.result?.formattedAddress,
-          url: result.result?.url,
-          types: result.result?.types,
-          country: country,
-          city: city,
-          photoRef:
-          result.result?.photos?.map((e) => e.photoReference).toList(),
-          website: result.result?.website,
-        );
       });
     }
   }
 
   void _showLocationSelector(BuildContext context) async {
-    final attraction = Provider.of<Attraction>(context, listen: false);
+    final attractionViewModel = Provider.of<AttractionViewModel>(context, listen: false);
     selectedPlaceId = await Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute(
         builder: (context) => LocationSelector(),
       ),
     );
     if (selectedPlaceId != null) {
-      attraction.updateWith(googlePlaceId: selectedPlaceId);
-      _getLocationDetails(attraction);
-
+      attractionViewModel.updateWith(googlePlaceId: selectedPlaceId);
+      _getLocationDetails(attractionViewModel);
     }
   }
 
   Future<void> _submit() async {
-    final attraction = Provider.of<Attraction>(context, listen: false);
-    attraction.updateWith(submitted: true);
+    final attractionViewModel = Provider.of<AttractionViewModel>(context, listen: false);
     try {
-      if (attraction.isUpdate) {
-        widget.db.updateAttraction(attraction);
-        Fluttertoast.showToast(msg: 'Attraction Updated Successfully!');
+      var result = await attractionViewModel.submit(db);
+      if (result) {
+        Fluttertoast.showToast(
+            msg: 'Attraction ' +
+                (attractionViewModel.isUpdate ? 'Updated' : 'Added') +
+                ' Successfully!');
+
         Navigator.of(context, rootNavigator: true).pop();
       } else {
-        final attractions = await widget.db.attractionStream().first;
-        final allPlaceId = attractions.map((job) => job.googlePlaceId).toList();
-
-        if (allPlaceId.contains(attraction.googlePlaceId)) {
-          showAlertDialog(
-            title: 'Place already used!',
-            content: 'Please choose a different place',
-            defaultActionText: 'OK',
-            context: context,
-          );
-        } else {
-          final id = attraction.id ?? widget.db.documentIdFromCurrentDate();
-          attraction.updateWith(id: id);
-          await widget.db.setAttraction(attraction, id);
-          Fluttertoast.showToast(msg: 'Attraction Added Successfully!');
-
-          Navigator.of(context, rootNavigator: true).pop();
-        }
+        showAlertDialog(
+          title: 'Place is already used!',
+          content: 'Please choose a different place',
+          defaultActionText: 'OK',
+          context: context,
+        );
       }
     } on FirebaseException catch (e) {
       showExceptionAlertDialog(
