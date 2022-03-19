@@ -30,7 +30,6 @@ class SignInViewModel with EmailAndPasswordValidators, ChangeNotifier {
   bool showPassword;
   String name;
 
-
   Future<bool> checkIfUserExists(Database db, {String? email}) async {
     email = email ?? this.email;
     final users = await db.usersStream().first;
@@ -41,19 +40,18 @@ class SignInViewModel with EmailAndPasswordValidators, ChangeNotifier {
     return true;
   }
 
-  Future<bool> canLogin(Database db,{String? email , bool? isAdmin} ) async {
+  Future<bool> canLogin(Database db, {String? email, bool? isAdmin}) async {
     email = email ?? this.email;
     isAdmin = isAdmin ?? this.isAdmin;
     final users = await db.usersStream().first;
     final allUsers = users.map((user) => user).toList();
     bool _isAdmin =
-    allUsers.where((user) => user.email == email).first.isAdmin!;
+        allUsers.where((user) => user.email == email).first.isAdmin!;
     if (_isAdmin == isAdmin) {
       return true;
     }
     return false;
   }
-
 
   Future<bool> submit(BuildContext context, {bool? ifExists}) async {
     final db = Provider.of<Database>(context, listen: false);

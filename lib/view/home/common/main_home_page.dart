@@ -22,7 +22,7 @@ class MainHomePage extends StatefulWidget {
 class _MainHomePageState extends State<MainHomePage> {
   final MainHomePageController controller = MainHomePageController();
   TabItem _currentTab = TabItem.home;
-  bool isAdmin = false;
+  bool? isAdmin;
 
   @override
   void initState() {
@@ -54,8 +54,8 @@ class _MainHomePageState extends State<MainHomePage> {
   Map<TabItem, WidgetBuilder> get widgetBuilders {
     final auth = Provider.of<AuthBase>(context, listen: false);
     return {
-      TabItem.home: (_) => isAdmin ? AdminHome() : HomePage(),
-      if (!isAdmin) TabItem.saved: (_) => WishListPage(user: auth.myUser!),
+      TabItem.home: (_) => isAdmin! ? AdminHome() : HomePage(),
+      if (!isAdmin!) TabItem.saved: (_) => WishListPage(user: auth.myUser!),
       TabItem.profile: (context) => ChangeNotifierProvider<MyUserViewModel>(
             create: (_) => MyUserViewModel(
               myUser: MyUser(
@@ -80,18 +80,23 @@ class _MainHomePageState extends State<MainHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    setIsAdmin(context);
-
-    return WillPopScope(
-      onWillPop: () async =>
-          !await navigatorKeys[_currentTab]!.currentState!.maybePop(),
-      child: CupertinoHomeScaffold(
-        isAdmin: isAdmin,
-        currentTab: _currentTab,
-        onSelectTab: _select,
-        widgetBuilders: widgetBuilders,
-        navigatorKeys: isAdmin ? navigatorKeysAdmin : navigatorKeys,
-      ),
-    );
+    return isAdmin == null
+        ? Container(
+            color: Colors.white,
+            child: Center(
+              child: CircularProgressIndicator(),
+            ),
+          )
+        : WillPopScope(
+            onWillPop: () async =>
+                !await navigatorKeys[_currentTab]!.currentState!.maybePop(),
+            child: CupertinoHomeScaffold(
+              isAdmin: isAdmin!,
+              currentTab: _currentTab,
+              onSelectTab: _select,
+              widgetBuilders: widgetBuilders,
+              navigatorKeys: isAdmin! ? navigatorKeysAdmin : navigatorKeys,
+            ),
+          );
   }
 }

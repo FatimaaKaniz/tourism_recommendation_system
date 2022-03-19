@@ -8,6 +8,7 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tourism_recommendation_system/model/attraction.dart';
+import 'package:tourism_recommendation_system/view/home/standard_user/photo_viewer.dart';
 import 'package:tourism_recommendation_system/view_model/attraction_view_model.dart';
 import 'package:tourism_recommendation_system/view_model/user_view_model.dart';
 import 'package:tourism_recommendation_system/services/auth_base.dart';
@@ -214,16 +215,27 @@ class _AttractionDetailsPageState extends State<AttractionDetailsPage> {
                     itemBuilder: (context, index) {
                       return Container(
                         width: 250,
-                        child: Card(
-                          elevation: 4,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10.0),
+                        child: InkWell(
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => PhotoViewer(
+                                current: index,
+                                images: photos,
+                              ),
+                            ),
                           ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(10.0),
-                            child: Image.memory(
-                              photos[index],
-                              fit: BoxFit.fill,
+                          child: Card(
+                            elevation: 4,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(10.0),
+                              child: Image.memory(
+                                photos[index],
+                                fit: BoxFit.fill,
+                              ),
                             ),
                           ),
                         ),
