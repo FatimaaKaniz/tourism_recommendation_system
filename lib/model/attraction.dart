@@ -32,8 +32,9 @@ class Attraction implements Comparable<Attraction> {
     this.city,
   });
 
-  static AttractionType? getAttractionType(String type){
-    return AttractionType.values.firstWhereOrNull((element) => element.name == type);
+  static AttractionType? getAttractionType(String type) {
+    return AttractionType.values
+        .firstWhereOrNull((element) => element.name == type);
   }
 
   factory Attraction.fromMap(Map<String, dynamic> data, String documentId) {
@@ -42,7 +43,7 @@ class Attraction implements Comparable<Attraction> {
     final String? city = data['city'];
     final String type = data['attractionType'];
     AttractionType attractionType =
-    AttractionType.values.firstWhere((element) => element.name == type);
+        AttractionType.values.firstWhere((element) => element.name == type);
     final String? googlePlaceId = data['googlePlaceId'];
     final String? address = data['address'];
     final String? phone = data['phone'];
@@ -66,7 +67,7 @@ class Attraction implements Comparable<Attraction> {
         website: website,
         url: url,
         types: types,
-        city:city,
+        city: city,
         country: country);
   }
 
@@ -123,5 +124,4 @@ class Attraction implements Comparable<Attraction> {
     this.googlePlaceId = googlePlaceId ?? this.googlePlaceId;
     this.id = id ?? this.id;
   }
-
 }

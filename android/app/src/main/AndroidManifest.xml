@@ -34,7 +34,7 @@
     <uses-feature android:name="android.hardware.camera.autofocus" />
 
     <application
-        android:label="tourism_recommendation_system"
+        android:label="Tourism Attractions"
         android:icon="@mipmap/launcher_icon">
         android:requestLegacyExternalStorage=”true”
         <activity
